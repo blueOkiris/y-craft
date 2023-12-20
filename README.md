@@ -8,19 +8,25 @@ Semi-inspired by the systems of the GameMaker engine but fully source-code based
 
 No longer do you need to figure out how to integrate your abstractions in your engine of choice; build them in regular code and integrate it with the engine by default!
 
-## Building
+## Building a Game
 
 Requirements:
 
 - SDL, SDL_image, and SDL_mixer
 - gcc
 - make
+- Probably Linux system
+  + May work on other \*nix or even Windows/Mac if set up correctly
+  + Only Linux systems are officially supported tho
 
 Nix users can create a valid shell via `nix-shell`
 
-1. Add your sprites and audio to the proper folders
-2. Add custom Game Objects to the `src/` and `include/` directories (use `Player.h/cpp` and `Brick.h/cpp` as reference)
-3. Open up the `main.cpp` file and create rooms to store your game objects (pre-loaded with an example)
-4. Rename the engine in the Makefile and adjust any constants as necessary
-5. Run `make` to build
+1. Fork project. You're probably not going to touch the things in the `(src|include)/engine/` folders, but you will mess with everything else
+2. Add your images and audio to the proper folders
+3. Load your images and audio into the proper global hashmaps a la examples in `main.cpp`
+4. Create your custom GameObjects in the `(src|include)/gameobjs/` folders to define behavior for your game (see `Player.h/cpp` and `Brick.h/cpp` for examples)
+   - This is also where you define sprites for animation frames
+5. Create rooms to hold instances of GameObjects in the `(src|include)/rooms/` folders (see `Room0.h/cpp` for examples)
+6. Replace `x-craft` with the name of your game in the `Makefile` and in `src/engine/globals.cpp`
+7. Run `make` to build your binary
 
