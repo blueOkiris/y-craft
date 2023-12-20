@@ -28,7 +28,6 @@ int main(void) {
         { "music", &music },
         { "jump", &jump }
     };
-    std::cout << "Here!" << std::endl;
 
     // Define sprites
     auto idle = Sprite(
