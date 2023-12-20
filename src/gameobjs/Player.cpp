@@ -6,24 +6,42 @@
 #include <cmath>
 #include <iostream>
 #include <SDL2/SDL.h>
-#include <math.hpp>
-#include <Sprite.hpp>
-#include <GameObject.hpp>
-#include <Audio.hpp>
-#include <Player.hpp>
+#include <engine/math.hpp>
+#include <engine/Sprite.hpp>
+#include <engine/GameObject.hpp>
+#include <engine/Audio.hpp>
+#include <engine/globals.hpp>
+#include <gameobjs/Player.hpp>
 
 Player::Player(
     const std::string &name,
-    const std::pair<double, double> &defPos,
-    const Sprite &defSpr,
-    const CollisionShape &collShape,
-    const Sprite &idleSpr,
-    const Sprite &walkSpr):
-        GameObject(name, defPos, defSpr, collShape),
-        idle(idleSpr), walk(walkSpr),
-        _vel({ 0.0, 0.0 }),
+    const std::pair<double, double> &defPos):
+        GameObject(
+            name, defPos,
+            "idle",
+            std::map<std::string, Sprite>({
+                {
+                    "idle", Sprite(
+                        std::vector<Frame>({
+                            Frame("character.png", { 0, 0, 32, 32 }, { 128, 128 })
+                        }), 0.0, { 16, 16 }
+                    )
+                }, {
+                    "walk", Sprite(
+                        std::vector<Frame>({
+                            Frame("character.png", { 0, 0, 32, 32 }, { 128, 128 }),
+                            Frame("character.png", { 32, 0, 32, 32 }, { 128, 128 })
+                        }), 12.0, { 16, 16 }
+                    )
+                }
+            }), {
+                .shapeType = CollShapeType::Rect,
+                .center = { 32, 32 },
+                .width = 64,
+                .height = 64
+            }
+        ), _vel({ 0.0, 0.0 }),
         _right(false), _left(false),
-        _sprName("idle"),
         _grounded(false), _extraGrav(false),
         _facingRight(true),
         _startPos(defPos) {}
@@ -33,29 +51,26 @@ std::string Player::tag(void) const {
 }
 
 void Player::update(
-        std::map<std::string, Audio *> &sounds, const double delta,
-        const std::vector<GameObject *> &others) {
+        const double delta,
+        const std::vector<std::shared_ptr<GameObject>> &others) {
     if (!Audio::isMusicPlaying()) {
-        sounds.at("music")->play();
+        globals::sounds.at("music")->play();
     }
 
-    pos = std::make_pair(pos.first + _vel.first * delta, pos.second + _vel.second * delta);
+    pos = { pos.first + _vel.first * delta, pos.second + _vel.second * delta };
 
     // Animate
+    _sprs.at(_curSpr).scale = { 0.5, 0.5 };
+    _sprs.at(_curSpr).flip = std::make_pair(!_facingRight, false);
     if (!_grounded && _sprName != "idle") {
-        spr.setTo(idle);
-        _sprName = "idle";
-        // TODO: Have sprites have ids
+        _curSpr = "idle";
     } else if (_grounded) {
         if (std::abs(_vel.first) < moveSpd * 0.8 && _sprName != "idle") {
-            spr.setTo(idle);
-            _sprName = "idle";
+            _curSpr = "idle";
         } else if (std::abs(_vel.first) >= moveSpd * 0.8 && _sprName != "walk") {
-            spr.setTo(walk);
-            _sprName = "walk";
+            _curSpr = "walk";
             _facingRight = _vel.first > 0.1;
         }
-        spr.flip = std::make_pair(!_facingRight, false);
     }
 
     // Update vel at the end, so collisions can affect it!
@@ -94,18 +109,18 @@ void Player::update(
             _vel.second = 0.0;
             switch (otherCollider.shapeType) {
                 case CollShapeType::Circle:
-                    pos = std::make_pair(
+                    pos = {
                         pos.first,
                         otherCollider.center.second - otherCollider.radius
                             - 2 * otherCollider.radius - 1
-                    );
+                    };
                     break;
                 case CollShapeType::Rect:
-                    pos = std::make_pair(
+                    pos = {
                         pos.first,
                         otherCollider.center.second - otherCollider.height / 2
                             - otherCollider.height - 1
-                    );
+                    };
                     break;
             }
         }
@@ -120,7 +135,7 @@ void Player::update(
     }
 }
 
-void Player::handleSdlEvent(std::map<std::string, Audio *> &sounds, const SDL_Event &ev) {
+void Player::handleSdlEvent(const SDL_Event &ev) {
     switch (ev.type) {
         case SDL_KEYDOWN:
             switch (ev.key.keysym.scancode) {
@@ -132,9 +147,9 @@ void Player::handleSdlEvent(std::map<std::string, Audio *> &sounds, const SDL_Ev
                     break;
                 case SDL_SCANCODE_UP:
                     if (_grounded) {
-                        pos = std::make_pair(pos.first, pos.second - 1);
+                        pos = { pos.first, pos.second - 1 };
                         _vel.second = -jumpSpd;
-                        sounds.at("jump")->play();
+                        globals::sounds.at("jump")->play();
                     }
                 default:
                     break;
@@ -159,7 +174,7 @@ void Player::handleSdlEvent(std::map<std::string, Audio *> &sounds, const SDL_Ev
     }
 }
 
-void Player::onCollision(const GameObject *other) {
+void Player::onCollision(const std::shared_ptr<GameObject> &other) {
     if (other->tag() == "Brick") {
         if ((other->pos.first <= pos.first && _vel.first < -0.1)
                 || (other->pos.first >= pos.first && _vel.first > 0.1)) {
@@ -173,8 +188,7 @@ void Player::reset(void) {
     _vel = std::make_pair(0.0, 0.0);
     _right = false;
     _left = false;
-    _sprName = "idle";
-    spr.setTo(idle);
+    _curSpr = "idle";
     _grounded = false;
     _extraGrav = false;
     _facingRight = true;

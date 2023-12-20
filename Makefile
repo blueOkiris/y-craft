@@ -18,8 +18,14 @@ LDFLAGS :=			-lSDL2 -lSDL2_image -lSDL2_mixer
 ## Project
 
 BIN :=				x-craft
-SRC :=				$(wildcard src/*.cpp)
-HFILES :=			$(wildcard include/*.hpp)
+SRC :=				$(wildcard src/*.cpp) \
+					$(wildcard src/engine/*.cpp) \
+					$(wildcard src/rooms/*.cpp) \
+					$(wildcard src/gameobjs/*.cpp)
+HFILES :=			$(wildcard include/*.hpp) \
+					$(wildcard include/engine/*.hpp) \
+					$(wildcard include/rooms/*.hpp) \
+					$(wildcard include/gameobjs/*.hpp)
 OBJS :=				$(subst .cpp,.o,$(subst src/,obj/,$(SRC)))
 
 # Targets
@@ -40,6 +46,9 @@ clean:
 
 obj/%.o: src/%.cpp $(HFILES)
 	mkdir -p obj
+	mkdir -p obj/engine
+	mkdir -p obj/gameobjs
+	mkdir -p obj/rooms
 	$(CC) $(CPPFLAGS) -o $@ -c $<
 
 ## Main

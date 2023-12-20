@@ -24,7 +24,7 @@ class Image {
 class Frame {
     public:
         Frame(
-            const Image &srcImage,
+            const std::string &srcImage,
             const SDL_Rect &srcClip,
             const std::pair<int, int> &drawSize
         );
@@ -36,7 +36,7 @@ class Frame {
             const double angle,
             const std::pair<bool, bool> &flip
         ) const;
-        const Image &image;
+        const std::string image;
         const SDL_Rect clip;
         const std::pair<int, int> size;
 };
@@ -50,8 +50,7 @@ class Sprite {
         );
         void update(const double delta);
         void render(SDL_Renderer *rndrr, const std::pair<int, int> &pos) const;
-        void setTo(const Sprite &from);
-    
+
         std::vector<Frame> frames;
         double animSpeed;
         std::pair<int, int> origin;

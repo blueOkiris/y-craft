@@ -1,23 +1,25 @@
 // Implementation of Room-related functions
 
 #include <vector>
-#include <GameObject.hpp>
+#include <memory>
 #include <SDL2/SDL.h>
-#include <Window.hpp>
-#include <Room.hpp>
+#include <engine/GameObject.hpp>
+#include <engine/Window.hpp>
+#include <engine/globals.hpp>
+#include <engine/Room.hpp>
 
-Room::Room(const bool persists, const std::vector<GameObject *> &roomObjs):
+Room::Room(const bool persists, const std::vector<std::shared_ptr<GameObject>> &roomObjs):
     persistant(persists), gameObjs(roomObjs) {}
 
-void Room::handleSdlEvent(std::map<std::string, Audio *> &sounds, const SDL_Event &ev) {
+void Room::handleSdlEvent(const SDL_Event &ev) {
     for (size_t i = 0; i < gameObjs.size(); i++) {
-        gameObjs[i]->handleSdlEvent(sounds, ev);
+        gameObjs[i]->handleSdlEvent(ev);
     }
 }
 
-void Room::update(std::map<std::string, Audio *> &sounds, const double deltaTime) {
+void Room::update(const double deltaTime) {
     for (size_t i = 0; i < gameObjs.size(); i++) {
-        gameObjs[i]->update(sounds, deltaTime, gameObjs);
+        gameObjs[i]->update(deltaTime, gameObjs);
     }
 
     for (size_t i = 0; i < gameObjs.size(); i++) {
@@ -56,7 +58,7 @@ void Room::render(SDL_Renderer *rndrr, const double elapsed) {
     SDL_RenderClear(rndrr);
     for (size_t i = 0; i < gameObjs.size(); i++) {
         gameObjs[i]->render(rndrr, elapsed);
-        if (g_window.drawCollisionShapes) {
+        if (globals::drawCollisionShapes) {
             gameObjs[i]->debugRenderCollider(rndrr);
         }
     }

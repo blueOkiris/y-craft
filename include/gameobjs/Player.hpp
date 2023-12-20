@@ -5,28 +5,22 @@
 #include <utility>
 #include <vector>
 #include <string>
-#include <Sprite.hpp>
-#include <GameObject.hpp>
-#include <Audio.hpp>
+#include <memory>
+#include <engine/GameObject.hpp>
 
 // Example GameObject type definition
 class Player: public GameObject {
     public:
         Player(
             const std::string &name,
-            const std::pair<double, double> &defPos,
-            const Sprite &defSpr,
-            const CollisionShape &collShape,
-            const Sprite &idleSpr,
-            const Sprite &walkSpr
+            const std::pair<double, double> &defPos
         );
         std::string tag(void) const override;
         void update(
-            std::map<std::string, Audio *> &sounds, const double delta,
-            const std::vector<GameObject *> &others
+            const double delta, const std::vector<std::shared_ptr<GameObject>> &others
         ) override;
-        void handleSdlEvent(std::map<std::string, Audio *> &sounds, const SDL_Event &ev) override;
-        void onCollision(const GameObject *other) override;
+        void handleSdlEvent(const SDL_Event &ev) override;
+        void onCollision(const std::shared_ptr<GameObject> &other) override;
         void reset(void) override;
 
         const double moveSpd = 512.0;
@@ -34,8 +28,6 @@ class Player: public GameObject {
         const double acc = 50.0;
         const double gravity = 4096.0;
         const double extraGrav = 13000.0;
-        const Sprite idle;
-        const Sprite walk;
 
     private:
         std::pair<double, double> _vel;

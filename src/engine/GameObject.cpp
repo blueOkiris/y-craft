@@ -2,10 +2,12 @@
 
 #include <iostream>
 #include <utility>
-#include <Sprite.hpp>
+#include <map>
 #include <SDL2/SDL.h>
-#include <Window.hpp>
-#include <GameObject.hpp>
+#include <engine/Sprite.hpp>
+#include <engine/Window.hpp>
+#include <engine/globals.hpp>
+#include <engine/GameObject.hpp>
 
 bool CollisionShape::collidesWith(const CollisionShape &other) const {
     switch (shapeType) {
@@ -108,12 +110,16 @@ bool CollisionShape::collidesWith(const CollisionShape &other) const {
 
 GameObject::GameObject(
         const std::string &name,
-        const std::pair<double, double> &defPos, const Sprite &defSpr, const CollisionShape &collShape):
-            id(name), pos(defPos), spr(defSpr), collider(collShape) {}
+        const std::pair<double, double> &defPos,
+        const std::string &defSpr, const std::map<std::string, Sprite> &objSprs,
+        const CollisionShape &collShape):
+            id(name), pos(defPos), collider(collShape), _curSpr(defSpr), _sprs(objSprs) {}
 
 void GameObject::render(SDL_Renderer *rndrr, const double elapsedTime) {
-    spr.update(elapsedTime);
-    spr.render(rndrr, std::make_pair(static_cast<int>(pos.first), static_cast<int>(pos.second)));
+    _sprs.at(_curSpr).update(elapsedTime);
+    _sprs.at(_curSpr).render(
+        rndrr, std::make_pair(static_cast<int>(pos.first), static_cast<int>(pos.second))
+    );
 }
 
 void drawCircle(SDL_Renderer *rndrr, std::pair<int, int> center, int radius) {
@@ -170,8 +176,9 @@ void GameObject::debugRenderCollider(SDL_Renderer *rndrr) const {
                 SDL_SetRenderDrawColor(rndrr, 255, 0, 255, 50);
                 SDL_RenderDrawRect(rndrr, &box);
                 SDL_SetRenderDrawColor(
-                    g_window.rndrr(),
-                    g_window.bgColor.r, g_window.bgColor.g, g_window.bgColor.b, g_window.bgColor.a
+                    globals::win.rndrr(),
+                    globals::win.bgColor.r, globals::win.bgColor.g,
+                    globals::win.bgColor.b, globals::win.bgColor.a
                 );
             } break;
         default:

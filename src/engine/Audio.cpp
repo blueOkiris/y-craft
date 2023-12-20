@@ -3,7 +3,7 @@
 #include <string>
 #include <iostream>
 #include <SDL2/SDL_mixer.h>
-#include <Audio.hpp>
+#include <engine/Audio.hpp>
 
 bool Audio::isMusicPlaying() {
     return Mix_PlayingMusic() != 0;

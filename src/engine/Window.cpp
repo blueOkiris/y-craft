@@ -10,13 +10,12 @@
 #include <thread>
 #include <vector>
 #include <map>
-#include <Sprite.hpp>
-#include <GameObject.hpp>
-#include <Room.hpp>
-#include <Audio.hpp>
-#include <Window.hpp>
-
-Window g_window;
+#include <engine/Sprite.hpp>
+#include <engine/GameObject.hpp>
+#include <engine/Room.hpp>
+#include <engine/Audio.hpp>
+#include <engine/Window.hpp>
+#include <engine/globals.hpp>
 
 Window::Window() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -32,8 +31,9 @@ Window::Window() {
         exit(1);
     }
     _win = SDL_CreateWindow(
-        title.c_str(),
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
+        globals::winTitle.c_str(),
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        globals::winWidth, globals::winHeight,
         SDL_WINDOW_SHOWN
     );
     if (!_win) {
@@ -61,9 +61,7 @@ SDL_Renderer *Window::rndrr(void) const {
     return _rndrr;
 }
 
-void Window::run(
-        std::map<std::string, Audio *> &sounds, std::map<std::string, Room> &rooms,
-        const std::string &startRoom) {
+void Window::run(const std::string &startRoom) {
     auto quit = false;
     SDL_Event event;
     auto startTime = std::chrono::high_resolution_clock::now();
@@ -71,7 +69,9 @@ void Window::run(
     _room = startRoom;
     while (!quit) {
         // Maintain fps
-        std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(intentionalDelayMs));
+        std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(
+            globals::minimumUpdateTimeMs
+        ));
         auto endTime = std::chrono::high_resolution_clock::now();
         const auto delta = endTime - startTime;
         const auto deltaUs = std::chrono::duration_cast<std::chrono::milliseconds>(delta);
@@ -80,7 +80,7 @@ void Window::run(
         elapsed += deltaTime;
 
         if (_roomReset) {
-            rooms.at(_room).reset();
+            globals::rooms.at(_room).reset();
             _roomReset = false;
         }
 
@@ -97,14 +97,13 @@ void Window::run(
                     quit = true;
                     break;
             }
-            rooms.at(loopRoom).handleSdlEvent(sounds, event);
+            globals::rooms.at(loopRoom).handleSdlEvent(event);
         }
-        rooms.at(loopRoom).update(sounds, deltaTime);
-
-        if (elapsed > 1.0 / 60.0) {
+        globals::rooms.at(loopRoom).update(deltaTime);
+        if (elapsed > 1.0 / globals::fps) {
             std::cout << "Fps: " << (1.0 / elapsed) << std::endl;
             SDL_SetRenderDrawColor(_rndrr, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-            rooms.at(loopRoom).render(_rndrr, elapsed);
+            globals::rooms.at(loopRoom).render(_rndrr, elapsed);
             SDL_RenderPresent(_rndrr);
             elapsed = 0.0;
         }

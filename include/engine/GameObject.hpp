@@ -3,10 +3,11 @@
 #pragma once
 
 #include <utility>
+#include <memory>
 #include <string>
+#include <map>
 #include <SDL2/SDL.h>
-#include <Sprite.hpp>
-#include <Audio.hpp>
+#include <engine/Sprite.hpp>
 
 enum class CollShapeType {
     Circle,
@@ -32,7 +33,8 @@ class GameObject {
         GameObject(
             const std::string &name,
             const std::pair<double, double> &defPos,
-            const Sprite &defSpr,
+            const std::string &defSpr,
+            const std::map<std::string, Sprite> &objSprs,
             const CollisionShape &collShape
         );
         void render(SDL_Renderer *rndrr, const double elapsedTime);
@@ -41,18 +43,19 @@ class GameObject {
         // User defined behavior
         virtual std::string tag(void) const = 0;
         virtual void update(
-            std::map<std::string, Audio *> &sounds, const double delta,
-            const std::vector<GameObject *> &others
+            const double delta, const std::vector<std::shared_ptr<GameObject>> &others
         ) = 0;
-        virtual void handleSdlEvent(
-            std::map<std::string, Audio *> &sounds, const SDL_Event &ev
-        ) = 0;
-        virtual void onCollision(const GameObject *other) = 0;
+        virtual void handleSdlEvent(const SDL_Event &ev) = 0;
+        virtual void onCollision(const std::shared_ptr<GameObject> &other) = 0;
         virtual void reset(void) = 0;
 
-        std::string id;
+        const std::string id;
+
         std::pair<double, double> pos;
-        Sprite spr;
         CollisionShape collider;
+
+    protected:
+        std::string _curSpr;
+        std::map<std::string, Sprite> _sprs;
 };
 

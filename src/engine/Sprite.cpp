@@ -7,7 +7,8 @@
 #include <utility>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <Sprite.hpp>
+#include <engine/globals.hpp>
+#include <engine/Sprite.hpp>
 
 SDL_Texture *loadTex(
         const std::string &imgSrc, SDL_Renderer *rndrr) {
@@ -50,7 +51,7 @@ void Image::render(
 }
 
 Frame::Frame(
-        const Image &srcImage, const SDL_Rect &srcClip,
+        const std::string &srcImage, const SDL_Rect &srcClip,
         const std::pair<int, int> &drawSize):
             image(srcImage), clip(srcClip), size(drawSize) {}
 
@@ -75,7 +76,7 @@ void Frame::render(
         .w = static_cast<int>(static_cast<double>(size.first) * scale.first),
         .h = static_cast<int>(static_cast<double>(size.second) * scale.second)
     };
-    image.render(rndrr, clip, dest, angle, flip);
+    globals::images.at(image)->render(rndrr, clip, dest, angle, flip);
 }
 
 Sprite::Sprite(
@@ -98,13 +99,5 @@ void Sprite::update(const double delta) {
 void Sprite::render(SDL_Renderer *rndrr, const std::pair<int, int> &pos) const {
     const auto frame = frames.at(index);
     frame.render(rndrr, pos, origin, scale, angle, flip);
-}
-
-void Sprite::setTo(const Sprite &from) {
-    frames = std::vector(from.frames);
-    animSpeed = from.animSpeed;
-    origin = from.origin;
-    index = 0;
-    scale = from.scale;
 }
 
