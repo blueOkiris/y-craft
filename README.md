@@ -17,3 +17,5 @@ Requirements:
 
 Run `make` to build the binary
 
+Check out the `x-snake` branch for an example of how to make a game in the engine.
+
