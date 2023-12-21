@@ -2,6 +2,7 @@
 
 #include <engine/globals.hpp>
 #include <rooms/title.hpp>
+#include <rooms/game.hpp>
 
 int main(void) {
     // Load audio
@@ -18,6 +19,7 @@ int main(void) {
 
     // Define rooms w/ Game Objects
     globals::rooms.insert({ "title", rooms::titleScreen() });
+    globals::rooms.insert({ "game", rooms::game() });
 
     // Start the game!
     globals::win.run("title");

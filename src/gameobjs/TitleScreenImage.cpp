@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <engine/globals.hpp>
 #include <engine/Sprite.hpp>
 #include <engine/GameObject.hpp>
 #include <gameobjs/TitleScreenImage.hpp>
@@ -35,7 +36,7 @@ void TitleScreenImage::handleSdlEvent(const SDL_Event &ev) {
         case SDL_KEYUP:
             switch (ev.key.keysym.scancode) {
                 case SDL_SCANCODE_RETURN:
-                    // TODO: Room change
+                    globals::win.changeRoom("game");
                     break;
                 default:
                     break;
