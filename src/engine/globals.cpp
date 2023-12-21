@@ -11,6 +11,7 @@
 // Project organization
 std::map<std::string, std::shared_ptr<Audio>> globals::sounds;
 std::map<std::string, std::shared_ptr<Image>> globals::images;
+std::map<std::string, std::shared_ptr<Font>> globals::fonts;
 std::map<std::string, Room> globals::rooms;
 Window globals::win;
 

@@ -8,7 +8,7 @@ A semi-clone of Snake using the X-Craft engine
 
 Requirements:
 
-- SDL, SDL_image, and SDL_mixer
+- SDL, SDL_image, SDL_ttf, and SDL_mixer
 - gcc
 - make
 - Probably Linux system

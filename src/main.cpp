@@ -17,6 +17,11 @@ int main(void) {
 
     // Load images
 
+    // Load fonts
+    globals::fonts.insert({
+        { "geist", std::make_shared<Font>("fonts/Geist/GeistVariableVF.ttf", 20) }
+    });
+
     // Define rooms w/ Game Objects
 
     // Start the game!

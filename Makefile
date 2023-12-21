@@ -13,7 +13,7 @@ CPPFLAGS :=			-Wall -Werror -std=c++17 -g \
 					-Iinclude $(addprefix -I,$(SDL2_PATH))
 endif
 LD :=				g++
-LDFLAGS :=			-lSDL2 -lSDL2_image -lSDL2_mixer
+LDFLAGS :=			-lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_ttf
 
 ## Project
 
