@@ -37,7 +37,7 @@ class GameObject {
             const std::map<std::string, Sprite> &objSprs,
             const CollisionShape &collShape
         );
-        void render(SDL_Renderer *rndrr, const double elapsedTime);
+        virtual void render(SDL_Renderer *rndrr, const double elapsedTime);
         void debugRenderCollider(SDL_Renderer *rndrr) const;
 
         // User defined behavior

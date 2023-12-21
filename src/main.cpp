@@ -30,6 +30,11 @@ int main(void) {
         "brick.png", std::make_shared<Image>("img/brick.png", globals::win.rndrr())
     });
 
+    // Load fonts
+    globals::fonts.insert({
+        { "geist", std::make_shared<Font>("fonts/Geist/GeistVariableVF.ttf", 20) }
+    });
+
     // Define rooms w/ Game Objects
     globals::rooms.insert({ "rm0", rooms::room0() });
 

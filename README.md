@@ -12,7 +12,7 @@ No longer do you need to figure out how to integrate your abstractions in your e
 
 Requirements:
 
-- SDL, SDL_image, and SDL_mixer
+- SDL, SDL_image, SDL_ttf, and SDL_mixer
 - gcc
 - make
 - Probably Linux system

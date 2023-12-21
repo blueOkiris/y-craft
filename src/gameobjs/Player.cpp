@@ -5,12 +5,14 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 #include <SDL2/SDL.h>
 #include <engine/math.hpp>
 #include <engine/Sprite.hpp>
 #include <engine/GameObject.hpp>
 #include <engine/Audio.hpp>
 #include <engine/globals.hpp>
+#include <engine/Font.hpp>
 #include <gameobjs/Player.hpp>
 
 Player::Player(
@@ -194,3 +196,16 @@ void Player::reset(void) {
     _facingRight = true;
     pos = _startPos;
 }
+
+void Player::render(SDL_Renderer *rndrr, const double elapsedTime) {
+    GameObject::render(rndrr, elapsedTime);
+
+    std::stringstream numText;
+    numText << (1.0 / elapsedTime) << "fps";
+    globals::fonts.at("geist")->render(
+        globals::win.rndrr(),
+        numText.str(), 0xFF, 0xFF, 0xFF, 0xFF,
+        { 100.0, 100.0 }, 45.0, { false, false }
+    );
+}
+

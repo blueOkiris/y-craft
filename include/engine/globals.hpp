@@ -6,6 +6,7 @@
 #include <memory>
 #include <engine/Audio.hpp>
 #include <engine/Sprite.hpp>
+#include <engine/Font.hpp>
 #include <engine/Room.hpp>
 #include <engine/Window.hpp>
 
@@ -13,6 +14,7 @@ namespace globals {
     // Project organization
     extern std::map<std::string, std::shared_ptr<Audio>> sounds;
     extern std::map<std::string, std::shared_ptr<Image>> images;
+    extern std::map<std::string, std::shared_ptr<Font>> fonts;
     extern std::map<std::string, Room> rooms;
     extern Window win;
 

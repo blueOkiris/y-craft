@@ -23,6 +23,8 @@ class Player: public GameObject {
         void onCollision(const std::shared_ptr<GameObject> &other) override;
         void reset(void) override;
 
+        void render(SDL_Renderer *rndrr, const double elapsedTime) override;
+
         const double moveSpd = 512.0;
         const double jumpSpd = 1500.0;
         const double acc = 50.0;
