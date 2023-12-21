@@ -16,9 +16,9 @@ Window globals::win;
 
 // Engine tweaks
 const double globals::fps = 60.0;
-const std::string globals::winTitle = "x-craft";
-const int globals::winWidth = 1920;
-const int globals::winHeight = 1080;
+const std::string globals::winTitle = "x-snake";
+const int globals::winWidth = 640;
+const int globals::winHeight = 360;
 const bool globals::drawCollisionShapes = false;
 const int globals::minimumUpdateTimeMs = 1;
 

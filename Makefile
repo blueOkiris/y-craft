@@ -17,7 +17,7 @@ LDFLAGS :=			-lSDL2 -lSDL2_image -lSDL2_mixer
 
 ## Project
 
-BIN :=				x-craft
+BIN :=				x-snake
 SRC :=				$(wildcard src/*.cpp) \
 					$(wildcard src/engine/*.cpp) \
 					$(wildcard src/rooms/*.cpp) \
