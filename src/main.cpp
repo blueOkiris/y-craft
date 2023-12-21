@@ -1,21 +1,15 @@
 // Entry point for play-builder engine
 
-#include <SDL2/SDL.h>
-#include <string>
-#include <memory>
-#include <utility>
-#include <iostream>
-#include <engine/Window.hpp>
-#include <engine/Sprite.hpp>
-#include <engine/GameObject.hpp>
-#include <engine/Room.hpp>
-#include <engine/Audio.hpp>
 #include <engine/globals.hpp>
+#include <rooms/title.hpp>
 
 int main(void) {
     // Load audio
 
     // Load images
+    globals::images.insert({
+        "title.png", std::make_shared<Image>("img/title.png", globals::win.rndrr())
+    });
 
     // Load fonts
     globals::fonts.insert({
@@ -23,8 +17,9 @@ int main(void) {
     });
 
     // Define rooms w/ Game Objects
+    globals::rooms.insert({ "title", rooms::titleScreen() });
 
     // Start the game!
-    globals::win.run("rm0");
+    globals::win.run("title");
     return 0;
 }
