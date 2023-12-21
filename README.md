@@ -2,7 +2,7 @@
 
 ## Description
 
-Craft your dream gaming experiences with the X-Craft engine.
+Craft your dream 2D gaming experiences with the X-Craft engine.
 
 Semi-inspired by the systems of the GameMaker engine but fully source-code based (C++), the X-Craft engine hopes to be the ideal engine for indie game devs coming from a programming background.
 
@@ -29,4 +29,6 @@ Nix users can create a valid shell via `nix-shell`
 5. Create rooms to hold instances of GameObjects in the `(src|include)/rooms/` folders (see `Room0.h/cpp` for examples)
 6. Replace `x-craft` with the name of your game in the `Makefile` and in `src/engine/globals.cpp`
 7. Run `make` to build your binary
+
+Check out the `x-snake` branch for an example of how to make a game in the engine.
 
