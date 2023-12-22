@@ -30,14 +30,14 @@ bool CollisionShape::collidesWith(const CollisionShape &other) const {
                         if (center.first < rect.x) {
                             // Left of rectangle
                             test.first = rect.x;
-                        } else if (center.first > rect.x) {
+                        } else if (center.first > rect.x + rect.w) {
                             // Right of rectangle
                             test.first = rect.x + rect.w;
                         }
                         if (center.second < rect.y) {
                             // Above rect
                             test.second = rect.y;
-                        } else if (center.second > rect.y) {
+                        } else if (center.second > rect.y + rect.h) {
                             // Below
                             test.second = rect.y + rect.h;
                         }
@@ -64,14 +64,14 @@ bool CollisionShape::collidesWith(const CollisionShape &other) const {
                         if (other.center.first < rect.x) {
                             // Left of rectangle
                             test.first = rect.x;
-                        } else if (other.center.first > rect.x) {
+                        } else if (other.center.first > rect.x + rect.w) {
                             // Right of rectangle
                             test.first = rect.x + rect.w;
                         }
                         if (other.center.second < rect.y) {
                             // Above rect
                             test.second = rect.y;
-                        } else if (other.center.second > rect.y) {
+                        } else if (other.center.second > rect.y + rect.h) {
                             // Below
                             test.second = rect.y + rect.h;
                         }
