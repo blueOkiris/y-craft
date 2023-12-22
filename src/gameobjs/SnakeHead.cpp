@@ -27,7 +27,7 @@ SnakeHead::SnakeHead(void):
             .width = 32,
             .height = 32
         }
-    ), _dir(0), _moveSpd(baseMoveSpd), _interPos(pos), _canChangeDir(false) {}
+    ), _dir(0), _moveSpd(baseMoveSpd), _interPos(pos), _canChangeDir(true), _startPos(pos) {}
 
 std::string SnakeHead::tag(void) const {
     return "SnakeHead";
@@ -35,6 +35,24 @@ std::string SnakeHead::tag(void) const {
 
 void SnakeHead::update(
         const double delta, const std::vector<std::shared_ptr<GameObject>> &others) {
+    if (_addBodySeg) {
+        int maxBody = -1;
+        std::pair<double, double> maxBodyPos = { 0.0, 0.0 };
+        for (const auto &other : others) {
+            if (other->id.rfind("snakeBody", 0) == 0) {
+                const auto snakeBody = std::dynamic_pointer_cast<SnakeBody>(other);
+                if (snakeBody->index > maxBody) {
+                    maxBody = snakeBody->index;
+                    maxBodyPos = snakeBody->pos;
+                }
+            }
+        }
+        globals::win.addObjRoom(std::dynamic_pointer_cast<GameObject>(
+            std::make_shared<SnakeBody>(maxBody + 1, maxBodyPos)
+        ));
+        _addBodySeg = false;
+        _moveSpd += moveSpdInc;
+    }
     switch (_dir) {
         default:
         case 0:
@@ -144,8 +162,19 @@ void SnakeHead::handleSdlEvent(const SDL_Event &ev) {
     }
 }
 
-void SnakeHead::onCollision(const std::shared_ptr<GameObject> &other) {}
-void SnakeHead::reset(void) {}
+void SnakeHead::onCollision(const std::shared_ptr<GameObject> &other) {
+    if (other->id == "mouse") {
+        _addBodySeg = true;
+    }
+}
+
+void SnakeHead::reset(void) {
+    pos = _startPos;
+    _dir = 0;
+    _moveSpd = baseMoveSpd;
+    _interPos = _startPos;
+    _canChangeDir = true;
+}
 
 std::string snakeBodyName(const int ind) {
     std::stringstream name;
@@ -170,7 +199,7 @@ SnakeBody::SnakeBody(const int ind, const std::pair<double, double> &defPos):
             .width = 32,
             .height = 32
         }
-    ), dir(0), lastDir(0), index(ind), lastPos(pos) {}
+    ), dir(0), lastDir(0), index(ind), _lastPos(pos), _startPos(pos) {}
 
 std::string SnakeBody::tag(void) const {
     return "SnakeBody";
@@ -178,7 +207,7 @@ std::string SnakeBody::tag(void) const {
 
 void SnakeBody::update(
         const double delta, const std::vector<std::shared_ptr<GameObject>> &others) {
-    if (pos.first != lastPos.first || pos.second != lastPos.second) {
+    if (pos.first != _lastPos.first || pos.second != _lastPos.second) {
         std::stringstream child;
         child << "snakeBody" << (index + 1);
 
@@ -186,7 +215,7 @@ void SnakeBody::update(
         for (const auto &other : others) {
             if (other->id == child.str()) {
                 foundChild = true;
-                other->pos = lastPos;
+                other->pos = _lastPos;
                 std::dynamic_pointer_cast<SnakeBody>(other)->dir = lastDir;
             }
         }
@@ -194,13 +223,13 @@ void SnakeBody::update(
             // Do tail for last body
             for (const auto &other : others) {
                 if (other->id == "snakeTail") {
-                    other->pos = lastPos;
+                    other->pos = _lastPos;
                     std::dynamic_pointer_cast<SnakeTail>(other)->dir = lastDir;
                 }
             }
         }
 
-        lastPos = pos;
+        _lastPos = pos;
         lastDir = dir;
     }
     switch(dir) {
@@ -222,7 +251,15 @@ void SnakeBody::update(
 
 void SnakeBody::handleSdlEvent(const SDL_Event &ev) {}
 void SnakeBody::onCollision(const std::shared_ptr<GameObject> &other) {}
-void SnakeBody::reset(void) {}
+
+void SnakeBody::reset(void) {
+    if (index > 3) {
+        pos = { -1000.0, -1000.0 };
+        globals::win.tryRmObjRoom(id);
+    } else {
+        pos = _startPos;
+    }
+}
 
 SnakeTail::SnakeTail(void):
     GameObject(
@@ -240,7 +277,7 @@ SnakeTail::SnakeTail(void):
             .width = 32,
             .height = 32
         }
-    ) {}
+    ), dir(0), _startPos(pos) {}
 
 std::string SnakeTail::tag(void) const {
     return "SnakeTail";
@@ -267,4 +304,9 @@ void SnakeTail::update(
 
 void SnakeTail::handleSdlEvent(const SDL_Event &ev) {}
 void SnakeTail::onCollision(const std::shared_ptr<GameObject> &other) {}
-void SnakeTail::reset(void) {}
+
+void SnakeTail::reset(void) {
+    pos = _startPos;
+    dir = 0;
+}
+

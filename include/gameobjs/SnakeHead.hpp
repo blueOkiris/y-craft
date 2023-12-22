@@ -20,13 +20,15 @@ class SnakeHead: public GameObject {
         void reset(void) override;
     
         const double baseMoveSpd = 64.0;
-        const double moveSpdInc = 32.0;
+        const double moveSpdInc = 8.0;
 
     private:
         int _dir;
         double _moveSpd;
         std::pair<double, double> _interPos;
         bool _canChangeDir;
+        std::pair<double, double> _startPos;
+        bool _addBodySeg;
 };
 
 class SnakeBody: public GameObject {
@@ -45,7 +47,8 @@ class SnakeBody: public GameObject {
         int index;
     
     private:
-        std::pair<double, double> lastPos;
+        std::pair<double, double> _lastPos;
+        std::pair<double, double> _startPos;
 };
 
 class SnakeTail: public GameObject {
@@ -60,5 +63,8 @@ class SnakeTail: public GameObject {
         void reset(void) override;
 
         int dir;
+
+    private:
+        std::pair<double, double> _startPos;
 };
 
