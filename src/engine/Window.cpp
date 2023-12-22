@@ -106,7 +106,6 @@ void Window::run(const std::string &startRoom) {
         }
         globals::rooms.at(loopRoom).update(deltaTime);
         if (elapsed > 1.0 / globals::fps) {
-            std::cout << "Fps: " << (1.0 / elapsed) << std::endl;
             SDL_SetRenderDrawColor(_rndrr, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
             globals::rooms.at(loopRoom).render(_rndrr, elapsed);
             SDL_RenderPresent(_rndrr);

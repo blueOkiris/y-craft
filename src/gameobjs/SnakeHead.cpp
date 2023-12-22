@@ -23,7 +23,7 @@ SnakeHead::SnakeHead(void):
             }
         }), {
             .shapeType = CollShapeType::Rect,
-            .center = { 16, 16 },
+            .center = { 0, 0 },
             .width = 32,
             .height = 32
         }
@@ -166,7 +166,7 @@ SnakeBody::SnakeBody(const int ind, const std::pair<double, double> &defPos):
             }
         }), {
             .shapeType = CollShapeType::Rect,
-            .center = { 16, 16 },
+            .center = { 0, 0 },
             .width = 32,
             .height = 32
         }
@@ -236,7 +236,7 @@ SnakeTail::SnakeTail(void):
             }
         }), {
             .shapeType = CollShapeType::Rect,
-            .center = { 16, 16 },
+            .center = { 0, 0 },
             .width = 32,
             .height = 32
         }
