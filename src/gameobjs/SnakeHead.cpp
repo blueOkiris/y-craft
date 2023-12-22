@@ -100,22 +100,39 @@ void SnakeHead::handleSdlEvent(const SDL_Event &ev) {
     switch (ev.type) {
         case SDL_KEYDOWN:
             if (_canChangeDir) {
+                double posDif = 0.0;
+                switch (_dir) {
+                    default:
+                    case 0:
+                    case 2:
+                        posDif = std::abs(_interPos.first - pos.first);
+                        break;
+                    case 1:
+                    case 3:
+                        posDif = std::abs(_interPos.second - pos.second);
+                        break;
+                }
+                _interPos = pos;
                 switch (ev.key.keysym.scancode) {
                     case SDL_SCANCODE_UP:
                         _canChangeDir = false;
                         _dir = 3;
+                        _interPos.second -= posDif;
                         break;
                     case SDL_SCANCODE_DOWN:
                         _canChangeDir = false;
                         _dir = 1;
+                        _interPos.second += posDif;
                         break;
                     case SDL_SCANCODE_LEFT:
                         _canChangeDir = false;
                         _dir = 2;
+                        _interPos.first -= posDif;
                         break;
                     case SDL_SCANCODE_RIGHT:
                         _canChangeDir = false;
                         _dir = 0;
+                        _interPos.first += posDif;
                         break;
                     default:
                         break;
