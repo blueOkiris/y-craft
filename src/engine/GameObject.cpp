@@ -158,12 +158,18 @@ void drawCircle(SDL_Renderer *rndrr, std::pair<int, int> center, int radius) {
 void GameObject::debugRenderCollider(SDL_Renderer *rndrr) const {
     switch (collider.shapeType) {
         case CollShapeType::Circle:
+            SDL_SetRenderDrawColor(rndrr, 255, 0, 255, 50);
             drawCircle(
                 rndrr,
                 std::make_pair(
                     collider.center.first + pos.first,
                     collider.center.second + pos.second
                 ), collider.radius
+            );
+            SDL_SetRenderDrawColor(
+                globals::win.rndrr(),
+                globals::win.bgColor.r, globals::win.bgColor.g,
+                globals::win.bgColor.b, globals::win.bgColor.a
             );
             break;
         case CollShapeType::Rect: {
