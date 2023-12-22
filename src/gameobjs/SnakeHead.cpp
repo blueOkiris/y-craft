@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <cmath>
 #include <engine/globals.hpp>
 #include <engine/Sprite.hpp>
 #include <engine/GameObject.hpp>
@@ -26,7 +27,7 @@ SnakeHead::SnakeHead(void):
             .width = 32,
             .height = 32
         }
-    ) {}
+    ), _dir(0), _moveSpd(baseMoveSpd), _interPos(pos), _canChangeDir(false) {}
 
 std::string SnakeHead::tag(void) const {
     return "SnakeHead";
@@ -34,10 +35,98 @@ std::string SnakeHead::tag(void) const {
 
 void SnakeHead::update(
         const double delta, const std::vector<std::shared_ptr<GameObject>> &others) {
-    _sprs.at(_curSpr).angle = 90.0;
+    switch (_dir) {
+        default:
+        case 0:
+            _sprs.at(_curSpr).angle = 90.0;
+            _interPos.first += delta * _moveSpd;
+            if (std::floor(_interPos.first) > pos.first + 32.0) {
+                for (const auto &other : others) {
+                    if (other->id == "snakeBody0") {
+                        other->pos = pos;
+                        std::dynamic_pointer_cast<SnakeBody>(other)->dir = 0;
+                    }
+                }
+                _canChangeDir = true;
+                pos.first += 32.0;
+            }
+            break;
+        case 1:
+            _sprs.at(_curSpr).angle = 180.0;
+            _interPos.second += delta * _moveSpd;
+            if (std::floor(_interPos.second) > pos.second + 32.0) {
+                for (const auto &other : others) {
+                    if (other->id == "snakeBody0") {
+                        other->pos = pos;
+                        std::dynamic_pointer_cast<SnakeBody>(other)->dir = 1;
+                    }
+                }
+                pos.second += 32.0;
+                _canChangeDir = true;
+            }
+            break;
+        case 2:
+            _sprs.at(_curSpr).angle = 270.0;
+            _interPos.first -= delta * _moveSpd;
+            if (std::ceil(_interPos.first) < pos.first - 32.0) {
+                for (const auto &other : others) {
+                    if (other->id == "snakeBody0") {
+                        other->pos = pos;
+                        std::dynamic_pointer_cast<SnakeBody>(other)->dir = 2;
+                    }
+                }
+                pos.first -= 32.0;
+                _canChangeDir = true;
+            }
+            break;
+        case 3:
+            _sprs.at(_curSpr).angle = 0.0;
+            _interPos.second -= delta * _moveSpd;
+            if (std::ceil(_interPos.second) < pos.second - 32.0) {
+                for (const auto &other : others) {
+                    if (other->id == "snakeBody0") {
+                        other->pos = pos;
+                        std::dynamic_pointer_cast<SnakeBody>(other)->dir = 3;
+                    }
+                }
+                pos.second -= 32.0;
+                _canChangeDir = true;
+            }
+            break;
+    }
 }
 
-void SnakeHead::handleSdlEvent(const SDL_Event &ev) {}
+void SnakeHead::handleSdlEvent(const SDL_Event &ev) {
+    switch (ev.type) {
+        case SDL_KEYDOWN:
+            if (_canChangeDir) {
+                switch (ev.key.keysym.scancode) {
+                    case SDL_SCANCODE_UP:
+                        _canChangeDir = false;
+                        _dir = 3;
+                        break;
+                    case SDL_SCANCODE_DOWN:
+                        _canChangeDir = false;
+                        _dir = 1;
+                        break;
+                    case SDL_SCANCODE_LEFT:
+                        _canChangeDir = false;
+                        _dir = 2;
+                        break;
+                    case SDL_SCANCODE_RIGHT:
+                        _canChangeDir = false;
+                        _dir = 0;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 void SnakeHead::onCollision(const std::shared_ptr<GameObject> &other) {}
 void SnakeHead::reset(void) {}
 
@@ -64,7 +153,7 @@ SnakeBody::SnakeBody(const int ind, const std::pair<double, double> &defPos):
             .width = 32,
             .height = 32
         }
-    ) {}
+    ), dir(0), lastDir(0), index(ind), lastPos(pos) {}
 
 std::string SnakeBody::tag(void) const {
     return "SnakeBody";
@@ -72,7 +161,46 @@ std::string SnakeBody::tag(void) const {
 
 void SnakeBody::update(
         const double delta, const std::vector<std::shared_ptr<GameObject>> &others) {
-    _sprs.at(_curSpr).angle = 90.0;
+    if (pos.first != lastPos.first || pos.second != lastPos.second) {
+        std::stringstream child;
+        child << "snakeBody" << (index + 1);
+
+        bool foundChild = false;
+        for (const auto &other : others) {
+            if (other->id == child.str()) {
+                foundChild = true;
+                other->pos = lastPos;
+                std::dynamic_pointer_cast<SnakeBody>(other)->dir = lastDir;
+            }
+        }
+        if (!foundChild) {
+            // Do tail for last body
+            for (const auto &other : others) {
+                if (other->id == "snakeTail") {
+                    other->pos = lastPos;
+                    std::dynamic_pointer_cast<SnakeTail>(other)->dir = lastDir;
+                }
+            }
+        }
+
+        lastPos = pos;
+        lastDir = dir;
+    }
+    switch(dir) {
+        default:
+        case 0:
+            _sprs.at(_curSpr).angle = 90.0;
+            break;
+        case 1:
+            _sprs.at(_curSpr).angle = 180.0;
+            break;
+        case 2:
+            _sprs.at(_curSpr).angle = 270.0;
+            break;
+        case 3:
+            _sprs.at(_curSpr).angle = 0.0;
+            break;
+    }
 }
 
 void SnakeBody::handleSdlEvent(const SDL_Event &ev) {}
@@ -103,7 +231,21 @@ std::string SnakeTail::tag(void) const {
 
 void SnakeTail::update(
         const double delta, const std::vector<std::shared_ptr<GameObject>> &others) {
-    _sprs.at(_curSpr).angle = 90.0;
+    switch(dir) {
+        default:
+        case 0:
+            _sprs.at(_curSpr).angle = 90.0;
+            break;
+        case 1:
+            _sprs.at(_curSpr).angle = 180.0;
+            break;
+        case 2:
+            _sprs.at(_curSpr).angle = 270.0;
+            break;
+        case 3:
+            _sprs.at(_curSpr).angle = 0.0;
+            break;
+    }
 }
 
 void SnakeTail::handleSdlEvent(const SDL_Event &ev) {}

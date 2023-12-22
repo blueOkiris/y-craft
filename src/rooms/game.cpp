@@ -16,7 +16,7 @@ Room rooms::game(void) {
                 0, std::make_pair(640.0 / 2 + 32.0 / 2.0, 360.0 / 2.0 - 32.0 / 2.0)
             )),
             std::dynamic_pointer_cast<GameObject>(std::make_shared<SnakeBody>(
-                0, std::make_pair(640.0 / 2 - 32.0 / 2.0, 360.0 / 2.0 - 32.0 / 2.0)
+                1, std::make_pair(640.0 / 2 - 32.0 / 2.0, 360.0 / 2.0 - 32.0 / 2.0)
             )), std::dynamic_pointer_cast<GameObject>(std::make_shared<SnakeTail>())
         })
     );

@@ -18,6 +18,15 @@ class SnakeHead: public GameObject {
         void handleSdlEvent(const SDL_Event &ev) override;
         void onCollision(const std::shared_ptr<GameObject> &other) override;
         void reset(void) override;
+    
+        const double baseMoveSpd = 64.0;
+        const double moveSpdInc = 32.0;
+
+    private:
+        int _dir;
+        double _moveSpd;
+        std::pair<double, double> _interPos;
+        bool _canChangeDir;
 };
 
 class SnakeBody: public GameObject {
@@ -30,6 +39,13 @@ class SnakeBody: public GameObject {
         void handleSdlEvent(const SDL_Event &ev) override;
         void onCollision(const std::shared_ptr<GameObject> &other) override;
         void reset(void) override;
+
+        int dir;
+        int lastDir;
+        int index;
+    
+    private:
+        std::pair<double, double> lastPos;
 };
 
 class SnakeTail: public GameObject {
@@ -42,5 +58,7 @@ class SnakeTail: public GameObject {
         void handleSdlEvent(const SDL_Event &ev) override;
         void onCollision(const std::shared_ptr<GameObject> &other) override;
         void reset(void) override;
+
+        int dir;
 };
 
