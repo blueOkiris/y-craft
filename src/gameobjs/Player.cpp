@@ -38,7 +38,7 @@ Player::Player(
                 }
             }), {
                 .shapeType = CollShapeType::Rect,
-                .center = { 32, 32 },
+                .center = { 0, 0 },
                 .width = 64,
                 .height = 64
             }
@@ -120,8 +120,8 @@ void Player::update(
                 case CollShapeType::Rect:
                     pos = {
                         pos.first,
-                        otherCollider.center.second - otherCollider.height / 2
-                            - otherCollider.height - 1
+                        otherCollider.center.second - otherCollider.height
+                            - 1
                     };
                     break;
             }

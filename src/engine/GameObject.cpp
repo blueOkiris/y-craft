@@ -174,8 +174,10 @@ void GameObject::debugRenderCollider(SDL_Renderer *rndrr) const {
             break;
         case CollShapeType::Rect: {
                 SDL_Rect box = {
-                    .x = collider.center.first - collider.width + static_cast<int>(pos.first),
-                    .y = collider.center.second - collider.height + static_cast<int>(pos.second),
+                    .x = collider.center.first - collider.width / 2
+                        + static_cast<int>(pos.first),
+                    .y = collider.center.second - collider.height / 2
+                        + static_cast<int>(pos.second),
                     .w = collider.width,
                     .h = collider.height
                 };
