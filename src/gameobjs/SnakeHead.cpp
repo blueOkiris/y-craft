@@ -13,7 +13,7 @@
 
 SnakeHead::SnakeHead(void):
     GameObject(
-        "snakeHead", { 640.0 / 2.0 + 32.0 + 32.0 / 2.0, 360.0 / 2.0 - 32.0 / 2.0 },
+        "snakeHead", { 640.0 / 2.0 + 32.0 + 32.0 / 2.0, 352.0 / 2.0 },
         "head", std::map<std::string, Sprite>({
             {
                 "head",
@@ -226,7 +226,7 @@ void SnakeBody::reset(void) {}
 
 SnakeTail::SnakeTail(void):
     GameObject(
-        "snakeTail", { 640.0 / 2.0 - 32.0 - 32.0 / 2.0, 360.0 / 2.0 - 32.0 / 2.0 },
+        "snakeTail", { 640.0 / 2.0 - 32.0 - 32.0 / 2.0, 352.0 / 2.0 },
         "tail", std::map<std::string, Sprite>({
             {
                 "tail",

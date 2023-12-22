@@ -14,6 +14,9 @@ int main(void) {
     globals::images.insert({
         "snake.png", std::make_shared<Image>("img/snake.png", globals::win.rndrr())
     });
+    globals::images.insert({
+        "mouse.png", std::make_shared<Image>("img/mouse.png", globals::win.rndrr())
+    });
 
     // Load fonts
     globals::fonts.insert({
