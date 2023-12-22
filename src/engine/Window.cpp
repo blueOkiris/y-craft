@@ -120,3 +120,20 @@ void Window::changeRoom(const std::string &room) {
     _roomReset = true;
 }
 
+void Window::tryRmObjRoom(const std::string &id) {
+    for (
+            std::vector<std::shared_ptr<GameObject>>::iterator it =
+                globals::rooms.at(_room).gameObjs.begin();
+            it != globals::rooms.at(_room).gameObjs.end();
+            ++it) {
+        if ((*it)->id == id) {
+            globals::rooms.at(_room).gameObjs.erase(it);
+            return;
+        }
+    }
+}
+
+void Window::addObjRoom(const std::shared_ptr<GameObject> &newObj) {
+    globals::rooms.at(_room).gameObjs.push_back(newObj);
+}
+
