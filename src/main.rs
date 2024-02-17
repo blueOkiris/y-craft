@@ -4,9 +4,9 @@ mod app;
 mod spr;
 mod font;
 mod snd;
+mod obj;
 
 use std::collections::HashMap;
-
 use font::Font;
 use spr::Image;
 use snd::Sound;

@@ -11,7 +11,6 @@ use sdl2::{
         Window, WindowContext
     }, Sdl, VideoSubsystem
 };
-
 use crate::{
     font::Font,
     spr::Image,
