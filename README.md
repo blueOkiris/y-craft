@@ -15,6 +15,7 @@ No longer do you need to figure out how to integrate your abstractions in your e
 Requirements:
 
 - Rust
+- Cmake
 - Probably Linux system
   + May work on other \*nix or even Windows/Mac if set up correctly
   + Only Linux systems are officially supported tho

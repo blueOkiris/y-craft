@@ -8,6 +8,7 @@ let
 in with pkgs; with xorg; mkShell {
     buildInputs = [
         cargo
+        cmake
         pkg-config
         unstable.rustc
     ];
