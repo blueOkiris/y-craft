@@ -1,19 +1,19 @@
 { pkgs ? import <nixpkgs> { } }:
 
-with pkgs; mkShell {
+let
+    unstable = import
+        (fetchTarball "https://nixos.org/channels/nixos-unstable/nixexprs.tar.xz") {};
+    buildLibs = with pkgs; (with xorg; [
+    ]);
+in with pkgs; with xorg; mkShell {
     buildInputs = [
-        gcc
-        gnumake
-        ccls
-        gdb
-    ];
-    nativeBuildInputs = [
-        SDL2
-        SDL2_image
-        SDL2_ttf
-        SDL2_mixer
+        cargo
+        pkg-config
+        unstable.rustc
     ];
     shellHook = ''
+        export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${lib.makeLibraryPath buildLibs}"
+        export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
     '';
 }
 

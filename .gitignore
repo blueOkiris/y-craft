@@ -3,3 +3,8 @@
 obj/
 x-snake
 
+
+
+# Added by cargo
+
+/target
