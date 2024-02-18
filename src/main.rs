@@ -5,54 +5,36 @@ mod spr;
 mod font;
 mod snd;
 mod obj;
+mod room;
+mod game;
 
 use std::collections::HashMap;
-use font::Font;
-use spr::Image;
-use snd::Sound;
+use game::{
+    ImageId, SndId, FontId, RoomId
+};
 use app::App;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-enum ImageId {
-    Title,
-    Snake,
-    Mouse
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-enum SndId {
-    Music,
-    Bite
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-enum FontId {
-    Geist
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-enum RoomId {
-    Title,
-    Game
-}
+const DEF_WIN_WIDTH: u32 = 1280;
+const DEF_WIN_HEIGHT: u32 = 720;
 
 fn main() -> Result<(), String> {
-    let app = App::new("Y-Craft")?;
+    let snds = [
+        (SndId::Music, "audio/battleThemeA.mp3"),
+        (SndId::Bite, "audio/crack01.mp3.flac")
+    ];
+    let imgs = [
+        (ImageId::Title, "img/title.png"),
+        (ImageId::Snake, "img/snake.png"),
+        (ImageId::Mouse, "img/mouse.png")
+    ];
+    let fonts = [
+        (FontId::Geist, 20, "fonts/Geist/GeistVariableVF.ttf")
+    ];
+    let mut rooms = HashMap::from([
+        (RoomId::Title, game::title())
+    ]);
 
-    let snds = HashMap::from([
-        (SndId::Music, Sound::load_music("audio/battleThemeA.mp3")),
-        (SndId::Bite, Sound::load_chunk("audio/crack01.mp3.flac"))
-    ]);
-    let imgs = HashMap::from([
-        (ImageId::Title, Image::new("img/title.png", &app.creator)),
-        (ImageId::Snake, Image::new("img/snake.png", &app.creator)),
-        (ImageId::Mouse, Image::new("img/mouse.png", &app.creator))
-    ]);
-    let fonts = HashMap::from([
-        (FontId::Geist, Font::new("fonts/Geist/GeistVariableVF.ttf", 20, &app.ttf_ctx))
-    ]);
-    let rooms = HashMap::from([]);
-
-    app.run(RoomId::Title, &snds, &imgs, &fonts, &rooms)
+    App::new("Y-Craft", DEF_WIN_WIDTH, DEF_WIN_HEIGHT)?
+        .run(RoomId::Title, &mut rooms, &snds, &imgs, &fonts)
 }
 

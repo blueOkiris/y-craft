@@ -13,7 +13,7 @@ pub struct Font<'a, 'b> {
 }
 
 impl<'a, 'b> Font<'a, 'b> {
-    pub fn new(src: &str, size: u16, ttf_ctx: &Sdl2TtfContext) -> Result<Self, String> {
+    pub fn new(src: &str, size: u16, ttf_ctx: &'a Sdl2TtfContext) -> Result<Self, String> {
         let font = ttf_ctx.load_font(src, size)?;
         Ok(Self {
             font

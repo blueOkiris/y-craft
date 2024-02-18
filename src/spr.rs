@@ -37,13 +37,14 @@ impl<'a> Image<'a> {
 }
 
 /// A single frame of animation - where to clip and how to draw
+#[derive(Clone, Copy)]
 pub struct Frame<ImgEnum> {
     src: ImgEnum,
     clip: Rect,
     size: (i32, i32)
 }
 
-impl<ImgEnum: Hash + Eq> Frame<ImgEnum> {
+impl<ImgEnum: Hash + Eq + Clone + Copy> Frame<ImgEnum> {
     pub fn new(src: ImgEnum, clip: Rect, size: (i32, i32)) -> Self {
         Self {
             src,
@@ -71,6 +72,7 @@ impl<ImgEnum: Hash + Eq> Frame<ImgEnum> {
 }
 
 /// A collection of different animation frames that can be moved around a screen
+#[derive(Clone)]
 pub struct Sprite<ImgEnum> {
     frames: Vec<Frame<ImgEnum>>,
     pub anim_spd: f64,
@@ -82,10 +84,10 @@ pub struct Sprite<ImgEnum> {
     pub flip: (bool, bool)
 }
 
-impl<ImgEnum: Hash + Eq> Sprite<ImgEnum> {
-    pub fn new(frames: &Vec<Frame<ImgEnum>>, anim_spd: f64, origin: (i32, i32)) -> Self {
+impl<ImgEnum: Hash + Eq + Clone + Copy> Sprite<ImgEnum> {
+    pub fn new(frames: Vec<Frame<ImgEnum>>, anim_spd: f64, origin: (i32, i32)) -> Self {
         Self {
-            frames: *frames.clone(),
+            frames: frames.clone(),
             anim_spd,
             origin,
             anim_idx: 0,

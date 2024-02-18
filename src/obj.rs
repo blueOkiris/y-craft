@@ -2,7 +2,7 @@
 
 use std::{
     collections::HashMap,
-    hash::Hash
+    hash::Hash, ops::IndexMut
 };
 use sdl2::{
     event::Event,
@@ -37,7 +37,7 @@ impl CollisionShape {
                         let c = other_radius + radius;
                         ((a * a) + (b * b)) as u32 <= (c * c)
                     }, CollisionShape::Rect { center: other_center, size: other_size } => {
-                        let mut test = center;
+                        let mut test = center.clone();
                         let rect = Rect::new(
                             other_center.0 - other_size.0 as i32 / 2,
                             other_center.1 - other_size.1 as i32 / 2,
@@ -62,7 +62,7 @@ impl CollisionShape {
             }, CollisionShape::Rect { center, size } => {
                 match other {
                     CollisionShape::Circle { center: other_center, radius: other_radius } => {
-                        let mut test = other_center;
+                        let mut test = other_center.clone();
                         let rect = Rect::new(
                             center.0 - size.0 as i32 / 2,
                             center.1 - size.1 as i32 / 2,
@@ -107,9 +107,10 @@ impl CollisionShape {
 }
 
 /// All game objects should have one of these as a member
-pub struct GameObjectState<TypeEnum, SpriteEnum, ImgEnum> {
+#[derive(Clone)]
+pub struct GameObjectState<ObjEnum, SpriteEnum, ImgEnum> {
     pub name: String,
-    pub class: TypeEnum,
+    pub class: ObjEnum,
     pub pos: (f64, f64),
     pub collider: CollisionShape,
     cur_spr: SpriteEnum,
@@ -118,24 +119,66 @@ pub struct GameObjectState<TypeEnum, SpriteEnum, ImgEnum> {
     def_spr: SpriteEnum
 }
 
+impl<O, S: Eq + Hash + Clone + Copy, I: Eq + Hash + Clone + Copy>
+        GameObjectState<O, S, I> {
+    pub fn new(
+            name: &str, class: O, def_pos: (f64, f64),
+            collider: CollisionShape, def_spr: S,
+            sprs_ls: &[(S, Sprite<I>)]) -> Self {
+        let mut sprs = HashMap::new();
+        for (key, val) in sprs_ls.iter() {
+            sprs.insert(*key, val.clone());
+        }
+        Self {
+            name: name.to_string(),
+            class,
+            pos: def_pos,
+            collider,
+            cur_spr: def_spr,
+            sprs,
+            def_pos,
+            def_spr
+        }
+    }
+
+    pub fn render(
+            &mut self, cnv: &mut Canvas<Window>, imgs: &HashMap<I, Image>,
+            elapsed: f64) -> Result<(), String> {
+        let mut spr = self.sprs[&self.cur_spr].clone();
+        spr.update(elapsed);
+        self.sprs.insert(self.cur_spr, spr);
+        self.sprs[&self.cur_spr].render(cnv, imgs, (self.pos.0 as i32, self.pos.1 as i32))
+    }
+}
+
 /// All game objects should implement these
-pub trait GameObjectBehavior<TypeEnum, SpriteEnum, ImgEnum> {
-    fn state(&self) -> GameObjectState<TypeEnum, SpriteEnum, ImgEnum>;
+pub trait GameObjectBehavior<ObjEnum, SpriteEnum, ImgEnum>:
+        GameObjectBehaviorClone<ObjEnum, SpriteEnum, ImgEnum> {
+    fn state(&self) -> GameObjectState<ObjEnum, SpriteEnum, ImgEnum>;
     fn update(
         &mut self, delta: f64,
-        others: &Vec<Box<dyn GameObjectBehavior<TypeEnum, SpriteEnum, ImgEnum>>>
+        others: &Vec<Box<dyn GameObjectBehavior<ObjEnum, SpriteEnum, ImgEnum>>>
     );
     fn handle_sdl_event(&mut self, event: &Event);
-    fn on_collision(&mut self, other: &Box<dyn GameObjectBehavior<TypeEnum, SpriteEnum, ImgEnum>>);
+    fn on_collision(&mut self, other: &Box<dyn GameObjectBehavior<ObjEnum, SpriteEnum, ImgEnum>>);
     fn on_reset(&mut self);
 }
 
-impl<TypeEnum, SpriteEnum: Eq + Hash, ImgEnum: Eq + Hash>
-        GameObjectState<TypeEnum, SpriteEnum, ImgEnum> {
-    pub fn render(
-            &mut self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgEnum, Image>, elapsed: f64) {
-        self.sprs[&self.cur_spr].update(elapsed);
-        self.sprs[&self.cur_spr].render(cnv, imgs, (self.pos.0 as i32, self.pos.1 as i32));
+/// A special trait to implement cloning for our dynamic GameObjects
+trait GameObjectBehaviorClone<O, S, I> {
+    fn clone_box(&self) -> Box<dyn GameObjectBehavior<O, S, I>>;
+}
+
+impl<T, O, S, I> GameObjectBehaviorClone<O, S, I> for T
+        where T: 'static + GameObjectBehavior<O, S, I> + Clone {
+    fn clone_box(&self) -> Box<dyn GameObjectBehavior<O, S, I>> {
+        Box::new(self.clone())
+    }
+}
+
+impl<O, S, I> Clone for Box<dyn GameObjectBehavior<O, S, I>> {
+    fn clone(&self) -> Self {
+        self.clone_box()
     }
 }
 
