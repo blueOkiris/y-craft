@@ -1,18 +1,12 @@
 //! Entry point for your Y-Craft application
 
-mod app;
-mod spr;
-mod font;
-mod snd;
-mod obj;
-mod room;
 mod game;
 
 use std::collections::HashMap;
 use game::{
     ImageId, SndId, FontId, RoomId
 };
-use app::App;
+use ycraft::app::App;
 
 const DEF_WIN_WIDTH: u32 = 1280;
 const DEF_WIN_HEIGHT: u32 = 720;

@@ -2,7 +2,17 @@
 name = "y-craft"
 version = "0.1.0"
 edition = "2021"
+authors = [ "Dylan Turner <dylan.turner@tutanota.com>" ]
+license = "GPL-3.0"
+description = "Craft your dream 2D gaming experiences with the X-Craft engine."
+readme = "README.md"
+categories = []
+repository = "https://github.com/blueOkiris/y-craft"
 
 [dependencies]
 sdl2 = { version = "0.36", features = [ "ttf", "image", "mixer" ] }
+
+[lib]
+name = "ycraft"
+path = "src/lib.rs"
 

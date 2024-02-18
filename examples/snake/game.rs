@@ -1,10 +1,9 @@
 //! Define custom game objects and rooms here
 
-use std::collections::HashMap;
 use sdl2::{
     event::Event, rect::Rect
 };
-use crate::{
+use ycraft::{
     obj::{
         CollisionShape, GameObjectBehavior, GameObjectState
     }, room::Room,
