@@ -119,10 +119,10 @@ pub struct GameObjectState<ObjId, SprId, ImgId> where
     pub class: ObjId,
     pub pos: (f64, f64),
     pub collider: CollisionShape,
-    cur_spr: SprId,
-    sprs: HashMap<SprId, Sprite<ImgId>>,
-    def_pos: (f64, f64),
-    def_spr: SprId
+    pub cur_spr: SprId,
+    pub sprs: HashMap<SprId, Sprite<ImgId>>,
+    pub def_pos: (f64, f64),
+    pub def_spr: SprId
 }
 
 impl<ObjId, SprId, ImgId> GameObjectState<ObjId, SprId, ImgId> where
@@ -169,15 +169,27 @@ pub trait GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>:
         FontId: Hash + Clone + Copy + Eq,
         RmId: Hash + Clone + Copy + Eq {
     fn state(&self) -> GameObjectState<ObjId, SprId, ImgId>;
+
     fn update(
-        &mut self, delta: f64,
-        others: &Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>
-    ) -> Option<RmId>;
-    fn handle_sdl_event(&mut self, event: &Event);
+            &mut self, _delta: f64,
+            _others: &Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>
+            ) -> (
+                Option<RmId>,
+                Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>
+            ) {
+        (None, vec![])
+    }
+
+    fn handle_sdl_event(&mut self, _event: &Event) {}
+
     fn on_collision(
         &mut self,
-        other: &Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>);
-    fn on_reset(&mut self);
+        _other: &Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>) {}
+
+    fn on_reset(&mut self) {
+        self.state().pos = self.state().def_pos;
+        self.state().cur_spr = self.state().def_spr;
+    }
 
     fn render(
             &mut self, cnv: &mut Canvas<Window>,
