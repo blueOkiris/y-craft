@@ -278,7 +278,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeBody {
                     Dir::Up => 0.0,
                     Dir::Down => 180.0,
                     Dir::Left => 270.0,
-                    Dir::Right => 0.0
+                    Dir::Right => 90.0
                 };
             }
         }
