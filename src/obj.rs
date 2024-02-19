@@ -186,9 +186,10 @@ pub trait GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>:
         &mut self,
         _other: &Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>) {}
 
-    fn on_reset(&mut self) {
+    fn on_reset(&mut self) -> bool {
         self.state().pos = self.state().def_pos;
         self.state().cur_spr = self.state().def_spr;
+        false
     }
 
     fn render(
