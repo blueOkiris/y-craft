@@ -1,5 +1,7 @@
 # Y-Craft
 
+NOTE: NOT READY FOR PRODUCTION. WAIT FOR v1.0.0!
+
 ## Description
 
 A Rust port of the [x-craft](https://github.com/blueOkiris/x-craft/) engine. This is where the ongoing development of the engine will be. X-Craft is a dead project.
