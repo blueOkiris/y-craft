@@ -1,4 +1,4 @@
-//! Generic "GameObject" system that defines sets of behaviors
+//! Generic "GameObject" system that defines sets of behaviors using enums for resources/obj data
 
 use std::{
     collections::HashMap,
@@ -11,11 +11,125 @@ use sdl2::{
     video::Window
 };
 use crate::{
-    font::Font,
-    snd::Sound, spr::{
-        Image, Sprite
-    }
+    res::{
+        Font,
+        Sound,
+        Image
+    }, IndexRestriction
 };
+
+/// Every game object should have these parameters to return them via state()
+///
+/// - name: String,
+/// - pos: (f64, f64)
+/// - collider: CollisionShape
+/// - cur_spr: SprId (a custom enum defined by you to distinguish between sprites)
+/// - sprs: HashMap<SprId, Sprite<ImgId>> (a mapping of sprite ids to sprites)
+/// - custom: Data (a custom enum containing data for all your objects)
+#[derive(Clone)]
+pub struct GameObjectState<Img, Spr, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Data: Clone {
+    pub name: String,
+    pub pos: (f64, f64),
+    pub collider: CollisionShape,
+    pub cur_spr: Spr,
+    pub sprs: HashMap<Spr, Sprite<Img>>,
+    pub custom: Data
+}
+
+/// All game objects should implement these
+///
+/// Note: the generic types refer to custom enums for indexing items:
+///
+/// - Img -> Id for going between the various Images loaded in
+/// - Snd -> Same but for sounds
+/// - Fnt -> Font
+/// - Spr -> Sprites
+/// - Rm -> Rooms
+/// - Data -> Custom data for each object
+pub trait GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
+    GameObjectBehaviorClone<Img, Snd, Fnt, Spr, Rm, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn state(&self) -> GameObjectState<Img, Spr, Data>;
+
+    /// Let game objects reset their data on room load. If you return true, the object is removed
+    /// from the room
+    fn on_reset(&mut self) -> bool;
+
+    /// Let game objects modify their state every loop. Return a room to change to and objects to
+    /// add to the room.
+    fn update(
+            &mut self, _delta: f64,
+            _others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
+                Option<Rm>, Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
+            ) {
+        (None, vec![])
+    }
+
+    fn handle_sdl_event(&mut self, _event: &Event) {}
+
+    fn on_collision(
+        &mut self,
+        _other: &Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>) {}
+
+    fn render(
+            &mut self, cnv: &mut Canvas<Window>,
+            imgs: &HashMap<Img, Image>, _snds: &HashMap<Snd, Sound>,
+            _fonts: &HashMap<Fnt, Font>,
+            elapsed: f64) -> Result<(), String> {
+        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
+        if let Some(spr) = sprs.get_mut(cur_spr) {
+            spr.update(elapsed);
+            spr.render(cnv, imgs, (pos.0 as i32, pos.1 as i32))?;
+        }
+        Ok(())
+    }
+}
+
+/// A special trait to implement cloning for our dynamic GameObjects
+pub trait GameObjectBehaviorClone<Img, Snd, Fnt, Spr, Rm, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn clone_box(&self) -> Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>;
+}
+
+impl<Img, Snd, Fnt, Spr, Rm, Data, T>
+    GameObjectBehaviorClone<Img, Snd, Fnt, Spr, Rm, Data> for T where
+        T: 'static + GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> + Clone,
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn clone_box(&self) -> Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>> {
+        Box::new(self.clone())
+    }
+}
+
+impl<Img, Snd, Fnt, Spr, Rm, Data> Clone
+    for Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn clone(&self) -> Self {
+        self.clone_box()
+    }
+}
 
 /// Colliders that attach to GameObjects. Support Circle and Rect colliders
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -109,134 +223,88 @@ impl CollisionShape {
     }
 }
 
-/// All game objects should have one of these as a member
-#[derive(Clone)]
-pub struct GameObjectState<ObjId, SprId, ImgId> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq {
-    pub name: String,
-    pub class: ObjId,
-    pub pos: (f64, f64),
-    pub collider: CollisionShape,
-    pub cur_spr: SprId,
-    pub sprs: HashMap<SprId, Sprite<ImgId>>,
-    pub def_pos: (f64, f64),
-    pub def_spr: SprId
+/// A single frame of animation - where to clip an image and how to draw
+///
+/// ImgId refers to an enum that distinguishes between all the image resources in your game
+#[derive(Clone, Copy)]
+pub struct Frame<ImgId> where ImgId: Hash + Eq + Clone + Copy {
+    src: ImgId,
+    clip: Rect,
+    size: (i32, i32)
 }
 
-impl<ObjId, SprId, ImgId> GameObjectState<ObjId, SprId, ImgId> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq {
-    pub fn new(
-            name: &str, class: ObjId, def_pos: (f64, f64),
-            collider: CollisionShape, def_spr: SprId,
-            sprs_ls: &[(SprId, Sprite<ImgId>)]) -> Self {
-        let mut sprs = HashMap::new();
-        for (key, val) in sprs_ls.iter() {
-            sprs.insert(*key, val.clone());
-        }
+impl<ImgId> Frame<ImgId> where ImgId: Hash + Eq + Clone + Copy {
+    pub fn new(src: ImgId, clip: Rect, size: (i32, i32)) -> Self {
         Self {
-            name: name.to_string(),
-            class,
-            pos: def_pos,
-            collider,
-            cur_spr: def_spr,
-            sprs,
-            def_pos,
-            def_spr
+            src,
+            clip,
+            size
         }
     }
 
     pub fn render(
-            &mut self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgId, Image>,
-            elapsed: f64) -> Result<(), String> {
-        let mut spr = self.sprs[&self.cur_spr].clone();
-        spr.update(elapsed);
-        self.sprs.insert(self.cur_spr, spr);
-        self.sprs[&self.cur_spr].render(cnv, imgs, (self.pos.0 as i32, self.pos.1 as i32))
+            &self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgId, Image>,
+            pos: (i32, i32), origin: (i32, i32), scale: (f64, f64),
+            angle: f64, flip: (bool, bool)) -> Result<(), String> {
+        let base_scale = (
+            self.size.0 as f64 / self.clip.w as f64,
+            self.size.1 as f64 / self.clip.h as f64
+        );
+        let dest = Rect::new(
+            (pos.0 as f64 - origin.0 as f64 * base_scale.0 * scale.0) as i32,
+            (pos.1 as f64 - origin.1 as f64 * base_scale.1 * scale.1) as i32,
+            (self.size.0 as f64 * scale.0) as u32,
+            (self.size.1 as f64 * scale.1) as u32
+        );
+        imgs[&self.src].render(cnv, &self.clip, &dest, angle, flip)
     }
 }
 
-/// All game objects should implement these
-pub trait GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>:
-    GameObjectBehaviorClone<ObjId, SprId, ImgId, SndId, FontId, RmId> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq,
-        SndId: Hash + Clone + Copy + Eq,
-        FontId: Hash + Clone + Copy + Eq,
-        RmId: Hash + Clone + Copy + Eq {
-    fn state(&self) -> GameObjectState<ObjId, SprId, ImgId>;
-
-    fn update(
-            &mut self, _delta: f64,
-            _others: &Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>
-            ) -> (
-                Option<RmId>,
-                Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>
-            ) {
-        (None, vec![])
-    }
-
-    fn handle_sdl_event(&mut self, _event: &Event) {}
-
-    fn on_collision(
-        &mut self,
-        _other: &Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>) {}
-
-    fn on_reset(&mut self) -> bool {
-        self.state().pos = self.state().def_pos;
-        self.state().cur_spr = self.state().def_spr;
-        false
-    }
-
-    fn render(
-            &mut self, cnv: &mut Canvas<Window>,
-            imgs: &HashMap<ImgId, Image>, _snds: &HashMap<SndId, Sound>,
-            _fonts: &HashMap<FontId, Font>,
-            elapsed: f64) -> Result<(), String> {
-        self.state().render(cnv, imgs, elapsed)
-    }
+/// A collection of different animation frames that can be moved around a screen
+#[derive(Clone)]
+pub struct Sprite<Img> where Img: IndexRestriction {
+    frames: Vec<Frame<Img>>,
+    pub anim_spd: f64,
+    pub origin: (i32, i32),
+    pub anim_idx: usize,
+    anim_idx_smooth: f64,
+    pub scale: (f64, f64),
+    pub angle: f64,
+    pub flip: (bool, bool)
 }
 
-/// A special trait to implement cloning for our dynamic GameObjects
-pub trait GameObjectBehaviorClone<ObjId, SprId, ImgId, SndId, FontId, RmId> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq,
-        SndId: Hash + Clone + Copy + Eq,
-        FontId: Hash + Clone + Copy + Eq,
-        RmId: Hash + Clone + Copy + Eq {
-    fn clone_box(&self) -> Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>;
-}
-
-impl<ObjId, SprId, ImgId, SndId, FontId, RmId, T>
-        GameObjectBehaviorClone<ObjId, SprId, ImgId, SndId, FontId, RmId>
-    for T where
-        T: 'static + GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId> + Clone,
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq,
-        SndId: Hash + Clone + Copy + Eq,
-        FontId: Hash + Clone + Copy + Eq,
-        RmId: Hash + Clone + Copy + Eq {
-    fn clone_box(&self) -> Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>> {
-        Box::new(self.clone())
+impl<Img> Sprite<Img> where Img: IndexRestriction {
+    pub fn new(frames: Vec<Frame<Img>>, anim_spd: f64, origin: (i32, i32)) -> Self {
+        Self {
+            frames: frames.clone(),
+            anim_spd,
+            origin,
+            anim_idx: 0,
+            anim_idx_smooth: 0.0,
+            scale: (1.0, 1.0),
+            angle: 0.0,
+            flip: (false, false)
+        }
     }
-}
 
-impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Clone
-    for Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq,
-        SndId: Hash + Clone + Copy + Eq,
-        FontId: Hash + Clone + Copy + Eq,
-        RmId: Hash + Clone + Copy + Eq {
-    fn clone(&self) -> Self {
-        self.clone_box()
+    pub fn update(&mut self, delta: f64) {
+        self.anim_idx_smooth += delta * self.anim_spd;
+        if self.anim_idx_smooth > 1.0 {
+            if self.anim_idx + 1 >= self.frames.len() {
+                self.anim_idx = 0;
+            } else {
+                self.anim_idx += 1;
+            }
+            self.anim_idx_smooth = 0.0;
+        }
+    }
+
+    pub fn render(
+            &self, cnv: &mut Canvas<Window>, imgs: &HashMap<Img, Image>,
+            pos: (i32, i32)) -> Result<(), String> {
+        self.frames[self.anim_idx].render(
+            cnv, imgs, pos, self.origin, self.scale, self.angle, self.flip
+        )
     }
 }
 

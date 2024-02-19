@@ -1,39 +1,39 @@
 //! Collect game objects to maintain a type of game object
 
-use std::{
-    collections::HashMap, hash::Hash
-};
+use std::collections::HashMap;
 use sdl2::{
     event::Event,
     render::Canvas,
     video::Window
 };
 use crate::{
-    font::Font, obj::GameObjectBehavior, snd::Sound, spr::Image
+    res::{
+        Image, Font, Sound
+    }, obj::GameObjectBehavior,
+    IndexRestriction
 };
 
 #[derive(Clone)]
-pub struct Room<ObjId, SprId, ImgId, SndId, FontId, RmId> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq,
-        SndId: Hash + Clone + Copy + Eq,
-        FontId: Hash + Clone + Copy + Eq,
-        RmId: Hash + Clone + Copy + Eq {
-    pub objs: Vec<Box<
-        dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>
-    >>, pub persistant: bool
+pub struct Room<Img, Snd, Fnt, Spr, Rm, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    pub objs: Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
+    pub persistant: bool
 }
 
-impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, FontId, RmId> where
-        ObjId: Hash + Clone + Copy + Eq,
-        SprId: Hash + Clone + Copy + Eq,
-        ImgId: Hash + Clone + Copy + Eq,
-        SndId: Hash + Clone + Copy + Eq,
-        FontId: Hash + Clone + Copy + Eq,
-        RmId: Hash + Clone + Copy + Eq {
+impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
     pub fn new(
-            objs: Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>,
+            objs: Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
             persistant: bool) -> Self {
         Self {
             objs,
@@ -47,7 +47,7 @@ impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, 
         }
     }
 
-    pub fn update(&mut self, delta: f64) -> Option<RmId> {
+    pub fn update(&mut self, delta: f64) -> Option<Rm> {
         let others = self.objs.clone();
         let mut ret = None;
         let mut objs = Vec::new();
@@ -78,8 +78,8 @@ impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, 
 
     pub fn render(
             &mut self, cnv: &mut Canvas<Window>,
-            imgs: &HashMap<ImgId, Image>, snds: &HashMap<SndId, Sound>,
-            fonts: &HashMap<FontId, Font>,
+            imgs: &HashMap<Img, Image>, snds: &HashMap<Snd, Sound>,
+            fonts: &HashMap<Fnt, Font>,
             elapsed: f64) -> Result<(), String> {
         cnv.clear();
         for obj in self.objs.iter_mut() {

@@ -2,7 +2,6 @@
 
 use std::{
     collections::HashMap,
-    hash::Hash,
     time::{
         Duration, Instant
     }
@@ -15,23 +14,25 @@ use sdl2::{
     }, pixels::Color
 };
 use crate::{
-    font::Font,
-    spr::Image,
-    snd::Sound,
-    room::Room
+    res::{
+        Font,
+        Image,
+        Sound
+    }, room::Room,
+    IndexRestriction
 };
 
-pub fn run<'a, 'b, ObjId, SprId, ImgId, SndId, FontId, RmId>(
+pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     title: &str, width: u32, height: u32, fps: f64, bg_color: &Color,
-    start_room: RmId, rooms: &mut HashMap<RmId, Room<ObjId, SprId, ImgId, SndId, FontId, RmId>>,
-    snd_srcs: &[(SndId, &str)], img_srcs: &[(ImgId, &str)],
-    font_srcs: &[(FontId, u16, &str)]) -> Result<(), String> where
-        ObjId: Hash + Eq + Clone + Copy,
-        SprId: Hash + Eq + Clone + Copy,
-        SndId: Hash + Eq + Clone + Copy,
-        ImgId: Hash + Eq + Clone + Copy,
-        FontId: Hash + Eq + Clone + Copy,
-        RmId: Hash + Eq + Clone + Copy {
+    start_room: Rm, rooms: &HashMap<Rm, Room<Img, Snd, Fnt, Spr, Rm, Data>>,
+    snd_srcs: &[(Snd, &str)], img_srcs: &[(Img, &str)],
+    font_srcs: &[(Fnt, u16, &str)]) -> Result<(), String> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
     let ctx = sdl2::init()?;
     let _ = ctx.audio()?;
     let subsys = ctx.video()?;
@@ -66,6 +67,8 @@ pub fn run<'a, 'b, ObjId, SprId, ImgId, SndId, FontId, RmId>(
         fonts.insert(*key, Font::new(src, *size, &ttf_ctx)?);
     }
 
+    let mut rooms = rooms.clone();
+
     // Create a timed 60fps game loop
     let mut room_reset = false;
     let mut start = Instant::now();
@@ -78,40 +81,39 @@ pub fn run<'a, 'b, ObjId, SprId, ImgId, SndId, FontId, RmId>(
         start = Instant::now();
         elapsed += delta;
 
-        let mut rm = rooms[&room].clone(); // Grab a mut room bc HashMaps are weird about mut
-
-        // Only reset at start of loop, triggered by something in the loop
-        if room_reset {
-            if !rm.persistant {
-                rm.reset();
+        if let Some(rm) = rooms.get_mut(&room) {
+            // Only reset at start of loop, triggered by something in the loop
+            if room_reset {
+                if !rm.persistant {
+                    rm.reset();
+                }
+                room_reset = false;
             }
-            room_reset = false;
-        }
 
-        // Update
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::KeyUp { scancode, .. } if scancode == Some(Scancode::F4) => {
-                    break 'game;
-                }, Event::Quit { .. } => {
-                    break 'game;
-                }, _ => {}
+            // Update
+            for event in event_pump.poll_iter() {
+                match event {
+                    Event::KeyUp { scancode, .. } if scancode == Some(Scancode::F4) => {
+                        break 'game;
+                    }, Event::Quit { .. } => {
+                        break 'game;
+                    }, _ => {}
+                }
+                rm.handle_sdl_event(&event);
             }
-            rm.handle_sdl_event(&event);
-        }
-        let new_room = rm.update(delta);
+            let new_room = rm.update(delta);
 
-        if elapsed > 1.0 / fps {
-            cnv.set_draw_color(*bg_color);
-            rm.render(&mut cnv, &imgs, &snds, &fonts, elapsed)?;
-            cnv.present();
-            elapsed = 0.0;
-        }
+            if elapsed > 1.0 / fps {
+                cnv.set_draw_color(*bg_color);
+                rm.render(&mut cnv, &imgs, &snds, &fonts, elapsed)?;
+                cnv.present();
+                elapsed = 0.0;
+            }
 
-        rooms.insert(room, rm);
-        if new_room.is_some() {
-            room = new_room.unwrap();
-            room_reset = true;
+            if new_room.is_some() {
+                room = new_room.unwrap();
+                room_reset = true;
+            }
         }
     }
 
