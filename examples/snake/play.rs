@@ -286,13 +286,88 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeBody {
     }
 }
 
+#[derive(Clone)]
+struct SnakeTail {
+    state: GameObjectState<Img, Spr, Data>,
+    dir: Dir,
+    last_dir: Dir,
+    last_pos: (f64, f64)
+}
+
+impl SnakeTail {
+    pub fn new() -> Self {
+        Self {
+            state: GameObjectState {
+                name: "snake_tail".to_string(),
+                pos: (640.0 / 2.0 - 32.0 - 32.0 / 2.0, 352.0 / 2.0),
+                cur_spr: Spr::Tail,
+                sprs: HashMap::from([(
+                    Spr::Tail,
+                    Sprite::new(
+                        vec![ Frame::new(Img::Snake, Rect::new(0, 32, 32, 32), (32, 32)) ],
+                        0.0, (16, 16)
+                    )
+                )]), collider: CollisionShape::Rect { center: (0, 0), size: (32, 32) },
+                custom: Data::Tail
+            }, dir: Dir::Right,
+            last_dir: Dir::Right,
+            last_pos: (640.0 / 2.0 - 32.0 - 32.0 / 2.0, 352.0 / 2.0)
+        }
+    }
+}
+
+impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeTail {
+    fn state(&self) -> GameObjectState<Img, Spr, Data> {
+        self.state.clone()
+    }
+
+    fn on_reset(&mut self) -> bool {
+        let nw = SnakeTail::new();
+        false
+    }
+
+    fn update(
+            &mut self, _delta: f64,
+            others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
+                Option<Rm>, Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
+            ) {
+        let mut max_body = -1;
+        for other in others.iter() {
+            if let Data::Body { index, .. } = other.state().custom {
+                if index > max_body {
+                    max_body = index;
+                }
+            }
+        }
+        for other in others.iter() {
+            if let Data::Body { index, dir: other_dir} = other.state().custom {
+                if index == max_body && self.last_pos != other.state().pos {
+                    self.dir = self.last_dir;
+                    self.state.pos = self.last_pos;
+                    self.last_dir = other_dir;
+                    self.last_pos = other.state().pos;
+                }
+            }
+        }
+        if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
+            spr.angle = match self.dir {
+                Dir::Up => 0.0,
+                Dir::Down => 180.0,
+                Dir::Left => 270.0,
+                Dir::Right => 90.0
+            };
+        }
+        (None, vec![])
+    }
+}
+
 pub fn play() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
     Room::new(
         vec![
             Box::new(SnakeHead::new()),
             Box::new(SnakeBody::new(0, (640.0 / 2.0 + 32.0 / 2.0, 352.0 / 2.0))),
             Box::new(SnakeBody::new(1, (640.0 / 2.0 - 32.0 / 2.0, 352.0 / 2.0))),
-            //SnakeTail
+            Box::new(SnakeTail::new())
             //Mouse
         ], false
     )

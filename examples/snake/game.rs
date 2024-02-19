@@ -2,7 +2,7 @@
 
 use crate::play::Dir;
 
-pub const BASE_MOVE_SPD: f64 = 24.0;
+pub const BASE_MOVE_SPD: f64 = 32.0;
 pub const MOVE_SPD_INC: f64 = 8.0;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
