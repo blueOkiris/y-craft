@@ -2,7 +2,7 @@
 
 ## Description
 
-A Rust port of the [x-craft](https://github.com/blueOkiris/x-craft/) engine.
+A Rust port of the [x-craft](https://github.com/blueOkiris/x-craft/) engine. This is where the ongoing development of the engine will be. X-Craft is a dead project.
 
 Craft your dream 2D gaming experiences with the Y-Craft engine.
 
