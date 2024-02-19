@@ -14,13 +14,13 @@ No longer do you need to figure out how to integrate your abstractions into your
 
 There are few different pieces to a Y-Craft game.
 
-First, you load your resources: images, fonts, and audio files. You simply provide the source and a few parameters into the run functions.
+First, you load your resources: images, fonts, and audio files. You simply provide the source and a few parameters into the run function.
 
 Then there are game objects. Game Objects are custom structs that you define and provide behavior for. There are ways for them to interact with each other through collisions and an update function, but generally they are independent. They can be created with sprites containing frames of animations. See the examples for a look at object design.
 
 Then there are rooms. Rooms are simply collections of objects. Rooms can be set to have constant state (persistent) or have them reset on transition.
 
-Rooms and resource links are passed into the `app::run` function to start the loop.
+Resources, Rooms, and Game Objects are all indexed by your own enums. Containers of rooms and resources are passed into the `app::run` function to start the loop.
 
 ## Build
 
