@@ -50,10 +50,14 @@ impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, 
     pub fn update(&mut self, delta: f64) -> Option<RmId> {
         let others = self.objs.clone();
         let mut ret = None;
+        let mut objs = Vec::new();
         for obj in self.objs.iter_mut() {
             let check_ret = obj.update(delta, &others);
-            if check_ret.is_some() && ret.is_none() {
-                ret = check_ret;
+            if check_ret.0.is_some() && ret.is_none() && objs.len() < 1 {
+                (ret, objs) = check_ret.clone();
+            }
+            if check_ret.1.len() > 0 && objs.len() < 1 && ret.is_none() {
+                (ret, objs) = check_ret;
             }
         }
         for obj in self.objs.iter_mut() {
@@ -68,6 +72,7 @@ impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, 
                 }
             }
         }
+        self.objs.append(&mut objs);
         ret
     }
 
