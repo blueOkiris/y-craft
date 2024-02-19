@@ -159,6 +159,22 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     }
                 }
             }
+
+            if self.add_body_seg {
+                let mut max_body = -1;
+                let mut max_body_pos = (0.0, 0.0);
+                for other in others.iter() {
+                    if let Data::Body { index, .. } = other.state().custom {
+                        if index > max_body {
+                            max_body = index;
+                            max_body_pos = other.state().pos;
+                        }
+                    }
+                }
+                added_objs.push(Box::new(SnakeBody::new(max_body + 1, max_body_pos)));
+                self.add_body_seg = false;
+                self.move_spd += MOVE_SPD_INC;
+            }
         }
         (None, added_objs)
     }
@@ -256,6 +272,14 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeBody {
                         }
                     }
                 }
+            }
+            if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
+                spr.angle = match dir {
+                    Dir::Up => 0.0,
+                    Dir::Down => 180.0,
+                    Dir::Left => 270.0,
+                    Dir::Right => 0.0
+                };
             }
         }
         (None, vec![])
