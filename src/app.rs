@@ -21,11 +21,8 @@ use crate::{
     room::Room
 };
 
-const FPS: f64 = 60.0;
-const BG_COLOR: Color = Color::WHITE;
-
 pub fn run<'a, 'b, ObjId, SprId, ImgId, SndId, FontId, RmId>(
-    title: &str, width: u32, height: u32,
+    title: &str, width: u32, height: u32, fps: f64, bg_color: &Color,
     start_room: RmId, rooms: &mut HashMap<RmId, Room<ObjId, SprId, ImgId, SndId, FontId, RmId>>,
     snd_srcs: &[(SndId, &str)], img_srcs: &[(ImgId, &str)],
     font_srcs: &[(FontId, u16, &str)]) -> Result<(), String> where
@@ -104,8 +101,8 @@ pub fn run<'a, 'b, ObjId, SprId, ImgId, SndId, FontId, RmId>(
         }
         let new_room = rm.update(delta);
 
-        if elapsed > 1.0 / FPS {
-            cnv.set_draw_color(BG_COLOR);
+        if elapsed > 1.0 / fps {
+            cnv.set_draw_color(*bg_color);
             rm.render(&mut cnv, &imgs, &snds, &fonts, elapsed)?;
             cnv.present();
             elapsed = 0.0;
