@@ -92,9 +92,15 @@ impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, 
         if self.persistant {
             return;
         }
-        for obj in self.objs.iter_mut() {
-            obj.on_reset();
+        let mut new_obs = Vec::new();
+        for obj in self.objs.iter() {
+            let mut obj_clone = obj.clone();
+            let res = obj_clone.on_reset();
+            if !res {
+                new_obs.push(obj_clone);
+            }
         }
+        self.objs = new_obs.clone();
     }
 }
 
