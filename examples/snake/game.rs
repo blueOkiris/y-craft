@@ -1,7 +1,7 @@
 //! Define custom game objects and rooms here
 
 use sdl2::{
-    event::Event, rect::Rect
+    event::Event, keyboard::Scancode, rect::Rect
 };
 use ycraft::{
     obj::{
@@ -13,7 +13,7 @@ use ycraft::{
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum ImageId {
+pub enum ImgId {
     Title,
     Snake,
     Mouse
@@ -31,7 +31,7 @@ pub enum FontId {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum RoomId {
+pub enum RmId {
     Title,
     Game
 }
@@ -42,49 +42,72 @@ pub enum ObjId {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum SpriteId {
+pub enum SprId {
     Title
 }
 
 #[derive(Clone)]
 struct TitleScreenImage {
-    pub state: GameObjectState<ObjId, SpriteId, ImageId>
+    pub state: GameObjectState<ObjId, SprId, ImgId>,
+    change_room: bool
 }
 
-impl GameObjectBehavior<ObjId, SpriteId, ImageId> for TitleScreenImage {
-    fn state(&self) -> GameObjectState<ObjId, SpriteId, ImageId> {
+impl GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId> for TitleScreenImage {
+    fn state(&self) -> GameObjectState<ObjId, SprId, ImgId> {
         self.state.clone()
     }
 
-    fn handle_sdl_event(&mut self, _event: &Event) {
-        // TODO
+    fn handle_sdl_event(&mut self, event: &Event) {
+        match event {
+            Event::KeyUp { scancode, .. } if *scancode == Some(Scancode::Return) => {
+                self.change_room = true;
+            }, _ => {}
+        }
     }
 
     fn update(
-        &mut self, _delta: f64,
-        _others: &Vec<Box<dyn GameObjectBehavior<ObjId, SpriteId, ImageId>>>) {}
+            &mut self, _delta: f64,
+            _others: &Vec<Box<
+                dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>
+            >>) -> Option<RmId> {
+        if self.change_room {
+            Some(RmId::Game)
+        } else {
+            None
+        }
+    }
+
     fn on_collision(
-        &mut self, _other: &Box<dyn GameObjectBehavior<ObjId, SpriteId, ImageId>>) {}
+        &mut self,
+        _other: &Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>) {}
     fn on_reset(&mut self) {}
 }
 
-pub fn title() -> Room<ObjId, SpriteId, ImageId> {
+pub fn title() -> Room<ObjId, SprId, ImgId, SndId, FontId, RmId> {
     Room::new(
         vec![ Box::new(TitleScreenImage {
             state: GameObjectState::new(
                 "title", ObjId::TitleScreenImage, (0.0, 0.0),
                 CollisionShape::Rect { center: (320, 180), size: (640, 480) },
-                SpriteId::Title, &[(
-                    SpriteId::Title,
+                SprId::Title, &[(
+                    SprId::Title,
                     Sprite::new(
                         vec![Frame::new(
-                            ImageId::Title, Rect::new(0, 0, 640, 360), (640, 360)
+                            ImgId::Title, Rect::new(0, 0, 640, 360), (640, 360)
                         )], 0.0, (0, 0)
                     )
                 )]
-            )
+            ), change_room: false
         }) ],
         false
+    )
+}
+
+pub fn game() -> Room<ObjId, SprId, ImgId, SndId, FontId, RmId> {
+    Room::new(
+        vec![
+
+        ], false
     )
 }
 

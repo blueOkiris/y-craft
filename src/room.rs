@@ -1,7 +1,7 @@
 //! Collect game objects to maintain a type of game object
 
 use std::{
-    collections::HashMap, hash::Hash, ops::IndexMut
+    collections::HashMap, hash::Hash
 };
 use sdl2::{
     event::Event,
@@ -9,22 +9,31 @@ use sdl2::{
     video::Window
 };
 use crate::{
-    obj::GameObjectBehavior,
-    spr::Image
+    font::Font, obj::GameObjectBehavior, snd::Sound, spr::Image
 };
 
-pub struct Room<ObjEnum, SpriteEnum, ImageEnum> {
-    pub objs: Vec<Box<dyn GameObjectBehavior<ObjEnum, SpriteEnum, ImageEnum>>>,
-    pub persistant: bool
+#[derive(Clone)]
+pub struct Room<ObjId, SprId, ImgId, SndId, FontId, RmId> where
+        ObjId: Hash + Clone + Copy + Eq,
+        SprId: Hash + Clone + Copy + Eq,
+        ImgId: Hash + Clone + Copy + Eq,
+        SndId: Hash + Clone + Copy + Eq,
+        FontId: Hash + Clone + Copy + Eq,
+        RmId: Hash + Clone + Copy + Eq {
+    pub objs: Vec<Box<
+        dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>
+    >>, pub persistant: bool
 }
 
-impl<
-    O: Eq + Hash + Clone + Copy,
-    S: Eq + Hash + Clone + Copy,
-    I: Eq + Hash + Clone + Copy>
-        Room<O, S, I> {
+impl<ObjId, SprId, ImgId, SndId, FontId, RmId> Room<ObjId, SprId, ImgId, SndId, FontId, RmId> where
+        ObjId: Hash + Clone + Copy + Eq,
+        SprId: Hash + Clone + Copy + Eq,
+        ImgId: Hash + Clone + Copy + Eq,
+        SndId: Hash + Clone + Copy + Eq,
+        FontId: Hash + Clone + Copy + Eq,
+        RmId: Hash + Clone + Copy + Eq {
     pub fn new(
-            objs: Vec<Box<dyn GameObjectBehavior<O, S, I>>>,
+            objs: Vec<Box<dyn GameObjectBehavior<ObjId, SprId, ImgId, SndId, FontId, RmId>>>,
             persistant: bool) -> Self {
         Self {
             objs,
@@ -38,10 +47,14 @@ impl<
         }
     }
 
-    pub fn update(&mut self, delta: f64) {
+    pub fn update(&mut self, delta: f64) -> Option<RmId> {
         let others = self.objs.clone();
+        let mut ret = None;
         for obj in self.objs.iter_mut() {
-            obj.update(delta, &others);
+            let check_ret = obj.update(delta, &others);
+            if check_ret.is_some() && ret.is_none() {
+                ret = check_ret;
+            }
         }
         for obj in self.objs.iter_mut() {
             let collider = obj.state().collider;
@@ -55,14 +68,17 @@ impl<
                 }
             }
         }
+        ret
     }
 
     pub fn render(
-            &mut self, cnv: &mut Canvas<Window>, imgs: &HashMap<I, Image>,
+            &mut self, cnv: &mut Canvas<Window>,
+            imgs: &HashMap<ImgId, Image>, snds: &HashMap<SndId, Sound>,
+            fonts: &HashMap<FontId, Font>,
             elapsed: f64) -> Result<(), String> {
         cnv.clear();
         for obj in self.objs.iter_mut() {
-            obj.state().render(cnv, imgs, elapsed)?;
+            obj.render(cnv, imgs, snds, fonts, elapsed)?;
         }
         Ok(())
     }

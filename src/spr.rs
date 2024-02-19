@@ -38,14 +38,14 @@ impl<'a> Image<'a> {
 
 /// A single frame of animation - where to clip and how to draw
 #[derive(Clone, Copy)]
-pub struct Frame<ImgEnum> {
-    src: ImgEnum,
+pub struct Frame<ImgId> where ImgId: Hash + Eq + Clone + Copy {
+    src: ImgId,
     clip: Rect,
     size: (i32, i32)
 }
 
-impl<ImgEnum: Hash + Eq + Clone + Copy> Frame<ImgEnum> {
-    pub fn new(src: ImgEnum, clip: Rect, size: (i32, i32)) -> Self {
+impl<ImgId> Frame<ImgId> where ImgId: Hash + Eq + Clone + Copy {
+    pub fn new(src: ImgId, clip: Rect, size: (i32, i32)) -> Self {
         Self {
             src,
             clip,
@@ -54,7 +54,7 @@ impl<ImgEnum: Hash + Eq + Clone + Copy> Frame<ImgEnum> {
     }
 
     pub fn render(
-            &self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgEnum, Image>,
+            &self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgId, Image>,
             pos: (i32, i32), origin: (i32, i32), scale: (f64, f64),
             angle: f64, flip: (bool, bool)) -> Result<(), String> {
         let base_scale = (
@@ -73,8 +73,8 @@ impl<ImgEnum: Hash + Eq + Clone + Copy> Frame<ImgEnum> {
 
 /// A collection of different animation frames that can be moved around a screen
 #[derive(Clone)]
-pub struct Sprite<ImgEnum> {
-    frames: Vec<Frame<ImgEnum>>,
+pub struct Sprite<ImgId> where ImgId: Hash + Eq + Clone + Copy {
+    frames: Vec<Frame<ImgId>>,
     pub anim_spd: f64,
     pub origin: (i32, i32),
     pub anim_idx: usize,
@@ -84,8 +84,8 @@ pub struct Sprite<ImgEnum> {
     pub flip: (bool, bool)
 }
 
-impl<ImgEnum: Hash + Eq + Clone + Copy> Sprite<ImgEnum> {
-    pub fn new(frames: Vec<Frame<ImgEnum>>, anim_spd: f64, origin: (i32, i32)) -> Self {
+impl<ImgId> Sprite<ImgId> where ImgId: Hash + Eq + Clone + Copy {
+    pub fn new(frames: Vec<Frame<ImgId>>, anim_spd: f64, origin: (i32, i32)) -> Self {
         Self {
             frames: frames.clone(),
             anim_spd,
@@ -111,7 +111,7 @@ impl<ImgEnum: Hash + Eq + Clone + Copy> Sprite<ImgEnum> {
     }
 
     pub fn render(
-            &self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgEnum, Image>,
+            &self, cnv: &mut Canvas<Window>, imgs: &HashMap<ImgId, Image>,
             pos: (i32, i32)) -> Result<(), String> {
         self.frames[self.anim_idx].render(
             cnv, imgs, pos, self.origin, self.scale, self.angle, self.flip

@@ -4,12 +4,12 @@ mod game;
 
 use std::collections::HashMap;
 use game::{
-    ImageId, SndId, FontId, RoomId
+    ImgId, SndId, FontId, RmId
 };
-use ycraft::app::App;
+use ycraft::app::run;
 
-const DEF_WIN_WIDTH: u32 = 1280;
-const DEF_WIN_HEIGHT: u32 = 720;
+const DEF_WIN_WIDTH: u32 = 640;
+const DEF_WIN_HEIGHT: u32 = 360;
 
 fn main() -> Result<(), String> {
     let snds = [
@@ -17,18 +17,21 @@ fn main() -> Result<(), String> {
         (SndId::Bite, "audio/crack01.mp3.flac")
     ];
     let imgs = [
-        (ImageId::Title, "img/title.png"),
-        (ImageId::Snake, "img/snake.png"),
-        (ImageId::Mouse, "img/mouse.png")
+        (ImgId::Title, "img/title.png"),
+        (ImgId::Snake, "img/snake.png"),
+        (ImgId::Mouse, "img/mouse.png")
     ];
     let fonts = [
         (FontId::Geist, 20, "fonts/Geist/GeistVariableVF.ttf")
     ];
     let mut rooms = HashMap::from([
-        (RoomId::Title, game::title())
+        (RmId::Title, game::title()),
+        (RmId::Game, game::game())
     ]);
 
-    App::new("Y-Craft", DEF_WIN_WIDTH, DEF_WIN_HEIGHT)?
-        .run(RoomId::Title, &mut rooms, &snds, &imgs, &fonts)
+    run(
+        "Y-Craft", DEF_WIN_WIDTH, DEF_WIN_HEIGHT,
+        RmId::Title, &mut rooms, &snds, &imgs, &fonts
+    )
 }
 

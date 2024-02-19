@@ -1,15 +1,18 @@
 //! Keep track of SDL context and window state as well as run main game loop
 
-use std::{collections::HashMap, hash::Hash};
+use std::{
+    collections::HashMap,
+    hash::Hash,
+    time::{
+        Duration, Instant
+    }
+};
 use sdl2::{
+    event::Event,
+    keyboard::Scancode,
     mixer::{
         AUDIO_S16LSB, DEFAULT_CHANNELS
-    }, render::{
-        Canvas, TextureCreator
-    }, ttf::Sdl2TtfContext,
-    video::{
-        Window, WindowContext
-    }, Sdl, VideoSubsystem
+    }, pixels::Color
 };
 use crate::{
     font::Font,
@@ -18,66 +21,103 @@ use crate::{
     room::Room
 };
 
-pub struct App {
-    ctx: Sdl,
-    pub ttf_ctx: Sdl2TtfContext,
-    subsys: VideoSubsystem,
-    cnv: Canvas<Window>,
-    pub creator: TextureCreator<WindowContext>
-}
+const FPS: f64 = 60.0;
+const BG_COLOR: Color = Color::WHITE;
 
-impl App {
-    pub fn new(title: &str, width: u32, height: u32) -> Result<Self, String> {
-        let ctx = sdl2::init()?;
-        let _ = ctx.audio()?;
-        let subsys = ctx.video()?;
-        let win = subsys
-            .window(title, width, height)
-            .position_centered()
-            .build()
-            .map_err(|e| e.to_string())?;
-        let cnv = win.into_canvas().build().map_err(|e| e.to_string())?;
-        let creator = cnv.texture_creator();
-        
-        let ttf_ctx = sdl2::ttf::init().map_err(|e| e.to_string())?;
+pub fn run<'a, 'b, ObjId, SprId, ImgId, SndId, FontId, RmId>(
+    title: &str, width: u32, height: u32,
+    start_room: RmId, rooms: &mut HashMap<RmId, Room<ObjId, SprId, ImgId, SndId, FontId, RmId>>,
+    snd_srcs: &[(SndId, &str)], img_srcs: &[(ImgId, &str)],
+    font_srcs: &[(FontId, u16, &str)]) -> Result<(), String> where
+        ObjId: Hash + Eq + Clone + Copy,
+        SprId: Hash + Eq + Clone + Copy,
+        SndId: Hash + Eq + Clone + Copy,
+        ImgId: Hash + Eq + Clone + Copy,
+        FontId: Hash + Eq + Clone + Copy,
+        RmId: Hash + Eq + Clone + Copy {
+    let ctx = sdl2::init()?;
+    let _ = ctx.audio()?;
+    let subsys = ctx.video()?;
+    let win = subsys
+        .window(title, width, height)
+        .position_centered()
+        .build()
+        .map_err(|e| e.to_string())?;
+    let mut event_pump = ctx.event_pump()?;
+    let mut cnv = win.into_canvas().build().map_err(|e| e.to_string())?;
+    let creator = cnv.texture_creator();
+    
+    let ttf_ctx = sdl2::ttf::init().map_err(|e| e.to_string())?;
 
-        let freq = 44100;
-        let format = AUDIO_S16LSB;
-        let channels = DEFAULT_CHANNELS;
-        let chunk_size = 1024;
-        sdl2::mixer::open_audio(freq, format, channels, chunk_size)?;
-
-        Ok(Self {
-            ctx,
-            ttf_ctx,
-            subsys,
-            cnv,
-            creator
-        })
+    let freq = 44100;
+    let format = AUDIO_S16LSB;
+    let channels = DEFAULT_CHANNELS;
+    let chunk_size = 1024;
+    sdl2::mixer::open_audio(freq, format, channels, chunk_size)?;
+    
+    // Load resources from file paths
+    let mut snds = HashMap::new();
+    for (key, src) in snd_srcs.iter() {
+        snds.insert(*key, Sound::load_music(src)?);
+    }
+    let mut imgs = HashMap::new();
+    for (key, src) in img_srcs.iter() {
+        imgs.insert(*key, Image::new(src, &creator)?);
+    }
+    let mut fonts = HashMap::new();
+    for (key, size, src) in font_srcs.iter() {
+        fonts.insert(*key, Font::new(src, *size, &ttf_ctx)?);
     }
 
-    /// After opening a window, load game resources and code and enter a game room
-    pub fn run<
-        'a, 'b, SndEnum: Hash + Eq, ImgEnum: Hash + Eq, FontEnum: Hash + Eq,
-        RoomEnum, ObjEnum, SpriteEnum>(
-            &mut self, start_room: RoomEnum,
-            rooms: &mut HashMap<RoomEnum, Room<ObjEnum, SpriteEnum, ImgEnum>>,
-            snd_srcs: &[(SndEnum, &str)], img_srcs: &[(ImgEnum, &str)],
-            font_srcs: &[(FontEnum, u16, &str)]) -> Result<(), String> {
-        // Load resources from file paths
-        let mut snds = HashMap::new();
-        for (key, src) in snd_srcs.iter() {
-            snds.insert(key, Sound::load_music(src)?);
+    // Create a timed 60fps game loop
+    let mut room_reset = false;
+    let mut start = Instant::now();
+    let mut elapsed = 0.0;
+    let mut room = start_room;
+    'game: loop {
+        // Maintain fps
+        std::thread::sleep(Duration::from_millis(1)); // Force a sleep bc CPU is really fast lol
+        let delta = start.elapsed().as_secs_f64();
+        start = Instant::now();
+        elapsed += delta;
+
+        let mut rm = rooms[&room].clone(); // Grab a mut room bc HashMaps are weird about mut
+
+        // Only reset at start of loop, triggered by something in the loop
+        if room_reset {
+            if !rm.persistant {
+                rm.reset();
+            }
+            room_reset = false;
         }
-        let mut imgs = HashMap::new();
-        for (key, src) in img_srcs.iter() {
-            imgs.insert(key, Image::new(src, &self.creator)?);
+
+        // Update
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::KeyUp { scancode, .. } if scancode == Some(Scancode::F4) => {
+                    break 'game;
+                }, Event::Quit { .. } => {
+                    break 'game;
+                }, _ => {}
+            }
+            rm.handle_sdl_event(&event);
         }
-        let mut fonts = HashMap::new();
-        for (key, size, src) in font_srcs.iter() {
-            fonts.insert(key, Font::new(src, *size, &self.ttf_ctx)?);
+        let new_room = rm.update(delta);
+
+        if elapsed > 1.0 / FPS {
+            cnv.set_draw_color(BG_COLOR);
+            rm.render(&mut cnv, &imgs, &snds, &fonts, elapsed)?;
+            cnv.present();
+            elapsed = 0.0;
         }
-        Ok(())
+
+        rooms.insert(room, rm);
+        if new_room.is_some() {
+            room = new_room.unwrap();
+            room_reset = true;
+        }
     }
+
+    Ok(())
 }
 
