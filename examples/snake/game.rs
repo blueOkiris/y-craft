@@ -124,9 +124,12 @@ impl ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Score {
 
     fn render(
             &mut self, cnv: &mut Canvas<Window>, cur_room: &Rm,
-            _imgs: &HashMap<Img, Image>, _snds: &HashMap<Snd, Sound>,
+            _imgs: &HashMap<Img, Image>, snds: &HashMap<Snd, Sound>,
             fonts: &HashMap<Fnt, Font>, creator: &TextureCreator<WindowContext>,
             _elapsed: f64) -> Result<(), String> {
+        if !Sound::is_music_playing() {
+            snds[&Snd::Music].play()?;
+        }
         match cur_room {
             Rm::Play | Rm::Dead => if let Data::Score(score) = self.data {
                 fonts[&Fnt::Geist].render(

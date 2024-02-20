@@ -19,20 +19,25 @@ const FPS: f64 = 60.0;
 const BG_COLOR: Color = Color::RGB(0x60, 0x60, 0x80);
 
 fn main() -> Result<(), String> {
+    // Custom identifier, raw byes, is music?
     let snds = [
-        (Snd::Music, "examples/snake/audio/battleThemeA.mp3"),
-        (Snd::Bite, "examples/snake/audio/crack01.mp3.flac")
+        (Snd::Music, include_bytes!("audio/battleThemeA.mp3") as &[u8], true),
+        (Snd::Bite, include_bytes!("audio/chomp.wav"), false)
     ];
+
+    // Custom identifier, raw bytes
     let imgs = [
-        (Img::Title, "examples/snake/img/title.png"),
-        (Img::Snake, "examples/snake/img/snake.png"),
-        (Img::Mouse, "examples/snake/img/mouse.png"),
-        (Img::Board, "examples/snake/img/board.png"),
-        (Img::Dead, "examples/snake/img/dead.png"),
-        (Img::Win, "examples/snake/img/win.png")
+        (Img::Title, include_bytes!("img/title.png") as &[u8]),
+        (Img::Snake, include_bytes!("img/snake.png")),
+        (Img::Mouse, include_bytes!("img/mouse.png")),
+        (Img::Board, include_bytes!("img/board.png")),
+        (Img::Dead, include_bytes!("img/dead.png")),
+        (Img::Win, include_bytes!("img/win.png"))
     ];
+
+    // Custom identifier, render size, raw bytes
     let fonts = [
-        (Fnt::Geist, 20, "examples/snake/fonts/Geist/GeistVariableVF.ttf")
+        (Fnt::Geist, 20, include_bytes!("fonts/Geist/GeistVariableVF.ttf") as &[u8])
     ];
 
     let rooms = HashMap::from([

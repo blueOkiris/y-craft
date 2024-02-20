@@ -10,7 +10,7 @@ use sdl2::{
     event::Event,
     keyboard::Scancode,
     mixer::{
-        AUDIO_S16LSB, DEFAULT_CHANNELS
+        InitFlag, AUDIO_S16LSB, DEFAULT_CHANNELS
     }, pixels::Color
 };
 use crate::{
@@ -32,8 +32,8 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     title: &str, width: u32, height: u32, fps: f64, bg_color: &Color,
     start_room: Rm, rooms: &HashMap<Rm, Room<Img, Snd, Fnt, Spr, Rm, Data>>,
     ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
-    snd_srcs: &[(Snd, &str)], img_srcs: &[(Img, &str)],
-    font_srcs: &[(Fnt, u16, &str)]) -> Result<(), String> where
+    snd_srcs: &[(Snd, &'static [u8], bool)], img_srcs: &[(Img, &[u8])],
+    font_srcs: &[(Fnt, u16, &[u8])]) -> Result<(), String> where
         Spr: IndexRestriction,
         Img: IndexRestriction,
         Snd: IndexRestriction,
@@ -59,15 +59,24 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     let channels = DEFAULT_CHANNELS;
     let chunk_size = 1024;
     sdl2::mixer::open_audio(freq, format, channels, chunk_size)?;
+    let _ = sdl2::mixer::init(InitFlag::MP3 | InitFlag::FLAC | InitFlag::MOD | InitFlag::OGG)?;
+    sdl2::mixer::allocate_channels(16);
     
     // Load resources from file paths
     let mut snds = HashMap::new();
-    for (key, src) in snd_srcs.iter() {
-        snds.insert(*key, Sound::load_music(src)?);
+    for (key, src, is_music) in snd_srcs.iter() {
+        if *is_music {
+            snds.insert(*key, Sound::load_music(src)?);
+        } else {
+            snds.insert(*key, Sound::load_chunk(src)?);
+        }
     }
     let mut imgs = HashMap::new();
     for (key, src) in img_srcs.iter() {
-        imgs.insert(*key, Image::new(src, &creator)?);
+        let mut img = image::load_from_memory(src)
+            .map_err(|e| e.to_string())?
+            .to_rgba8();
+        imgs.insert(*key, Image::new(&mut img, &creator)?);
     }
     let mut fonts = HashMap::new();
     for (key, size, src) in font_srcs.iter() {

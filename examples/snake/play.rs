@@ -5,12 +5,12 @@ use rand::Rng;
 use sdl2::{
     event::Event,
     keyboard::Scancode,
-    rect::Rect
+    rect::Rect, render::{Canvas, TextureCreator}, video::{Window, WindowContext}
 };
 use ycraft::{
     obj::{
         CollisionShape, ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
-    }, room::Room
+    }, res::{Font, Image, Sound}, room::Room
 };
 use crate::game::{
     Img, Snd, Fnt, Spr, Rm, Data, BASE_MOVE_SPD, MOVE_SPD_INC
@@ -31,7 +31,8 @@ struct SnakeHead {
     inter_pos: (f64, f64),
     can_change_dir: bool,
     add_body_seg: bool,
-    should_die: bool
+    should_die: bool,
+    play_eat_snd: bool
 }
 
 impl SnakeHead {
@@ -57,7 +58,8 @@ impl SnakeHead {
             inter_pos: pos,
             can_change_dir: true,
             add_body_seg: false,
-            should_die: false
+            should_die: false,
+            play_eat_snd: false
         }
     }
 }
@@ -212,8 +214,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
             &mut self,
             other: &Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>) {
         match other.state().custom {
-            Data::Mouse => self.add_body_seg = true,
-            Data::Tail | Data::Body { .. } => {
+            Data::Mouse => {
+                self.add_body_seg = true;
+                self.play_eat_snd = true;
+            }, Data::Tail | Data::Body { .. } => {
                 if let Data::Head { lurch_propagation, .. } = self.state.custom {
                     if lurch_propagation == 0 {
                         self.should_die = true;
@@ -222,6 +226,25 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
             }
             _ => {}
         }
+    }
+
+    fn render(
+                &mut self, cnv: &mut Canvas<Window>,
+                imgs: &HashMap<Img, Image>, snds: &HashMap<Snd, Sound>,
+                _fonts: &HashMap<Fnt, Font>, _creator: &TextureCreator<WindowContext>,
+                elapsed: f64) -> Result<(), String> {
+        if self.play_eat_snd {
+            snds[&Snd::Bite].play()?;
+            self.play_eat_snd = false;
+        }
+
+        // Default render
+        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
+        if let Some(spr) = sprs.get_mut(cur_spr) {
+            spr.update(elapsed);
+            spr.render(cnv, imgs, (pos.0 as i32, pos.1 as i32))?;
+        }
+        Ok(())
     }
 }
 
