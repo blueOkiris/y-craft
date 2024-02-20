@@ -31,7 +31,8 @@ struct SnakeHead {
     move_spd: f64,
     inter_pos: (f64, f64),
     can_change_dir: bool,
-    add_body_seg: bool
+    add_body_seg: bool,
+    should_die: bool
 }
 
 impl SnakeHead {
@@ -41,7 +42,7 @@ impl SnakeHead {
             state: GameObjectState {
                 name: "head".to_string(),
                 pos,
-                collider: CollisionShape::Rect { center: (0, 0), size: (32, 32) },
+                collider: CollisionShape::Rect { center: (0, 0), size: (31, 31) },
                 cur_spr: Spr::Head,
                 sprs: HashMap::from([(
                     Spr::Head,
@@ -55,7 +56,8 @@ impl SnakeHead {
             }, move_spd: BASE_MOVE_SPD,
             inter_pos: pos,
             can_change_dir: true,
-            add_body_seg: false
+            add_body_seg: false,
+            should_die: false
         }
     }
 }
@@ -72,6 +74,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
         self.inter_pos = nw.inter_pos;
         self.can_change_dir = nw.can_change_dir;
         self.add_body_seg = nw.add_body_seg;
+        self.should_die = false;
         false
     }
 
@@ -181,6 +184,9 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     || self.state.pos.0 > 640.0 - 32.0 || self.state.pos.1 > 360.0 - 32.0 {
                 return (Some(Rm::Dead), vec![]);
             }
+            if self.should_die {
+                return (Some(Rm::Dead), vec![]);
+            }
         }
         (None, added_objs)
     }
@@ -190,6 +196,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
             other: &Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>) {
         match other.state().custom {
             Data::Mouse => self.add_body_seg = true,
+            Data::Body { .. } | Data::Tail => self.should_die = true,
             _ => {}
         }
     }
@@ -209,7 +216,7 @@ impl SnakeBody {
             state: GameObjectState {
                 name: format!("snake_body_{}", index),
                 pos: def_pos,
-                collider: CollisionShape::Rect { center: (0, 0), size: (32, 32) },
+                collider: CollisionShape::Rect { center: (0, 0), size: (31, 31) },
                 cur_spr: Spr::Body,
                 sprs: HashMap::from([(
                     Spr::Body,
@@ -313,7 +320,7 @@ impl SnakeTail {
                         vec![ Frame::new(Img::Snake, Rect::new(0, 32, 32, 32), (32, 32)) ],
                         0.0, (16, 16)
                     )
-                )]), collider: CollisionShape::Rect { center: (0, 0), size: (32, 32) },
+                )]), collider: CollisionShape::Rect { center: (0, 0), size: (31, 31) },
                 custom: Data::Tail
             }, dir: Dir::Right,
             last_dir: Dir::Right,
