@@ -10,7 +10,8 @@ pub enum Img {
     Title,
     Snake,
     Mouse,
-    Board
+    Board,
+    Dead
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -31,7 +32,8 @@ pub enum Spr {
     Body,
     Tail,
     Mouse,
-    Board
+    Board,
+    Dead
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -52,6 +54,7 @@ pub enum Data {
         dir: Dir,
     }, Tail,
     Mouse,
-    Board
+    Board,
+    Dead
 }
 

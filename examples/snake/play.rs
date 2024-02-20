@@ -176,6 +176,11 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                 self.add_body_seg = false;
                 self.move_spd += MOVE_SPD_INC;
             }
+
+            if self.state.pos.0 < 32.0 || self.state.pos.1 < 32.0
+                    || self.state.pos.0 > 640.0 - 32.0 || self.state.pos.1 > 360.0 - 32.0 {
+                return (Some(Rm::Dead), vec![]);
+            }
         }
         (None, added_objs)
     }
@@ -439,7 +444,7 @@ impl Board {
                             Img::Board, Rect::new(0, 0, 640, 360), (640, 360)
                         )], 0.0, (0, 0)
                     )
-                )]), custom: Data::Title
+                )]), custom: Data::Board
             }
         }
     }

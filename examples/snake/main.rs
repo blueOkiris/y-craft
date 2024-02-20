@@ -1,6 +1,7 @@
 mod game;
 mod title;
 mod play;
+mod dead;
 
 use std::collections::HashMap;
 use game::{
@@ -26,7 +27,8 @@ fn main() -> Result<(), String> {
         (Img::Title, "examples/snake/img/title.png"),
         (Img::Snake, "examples/snake/img/snake.png"),
         (Img::Mouse, "examples/snake/img/mouse.png"),
-        (Img::Board, "examples/snake/img/board.png")
+        (Img::Board, "examples/snake/img/board.png"),
+        (Img::Dead, "examples/snake/img/dead.png")
     ];
     let fonts = [
         (Fnt::Geist, 20, "examples/snake/fonts/Geist/GeistVariableVF.ttf")
@@ -34,7 +36,8 @@ fn main() -> Result<(), String> {
 
     let rooms = HashMap::from([
         (Rm::Title, title::title()),
-        (Rm::Play, play::play())
+        (Rm::Play, play::play()),
+        (Rm::Dead, dead::dead())
     ]);
 
     run(
