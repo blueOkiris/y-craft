@@ -109,9 +109,6 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
             }
 
             // Update
-            
-            // TODO: ADD PRE-EMPTIVE COLLISIONS
-
             for event in event_pump.poll_iter() {
                 match event {
                     Event::KeyUp { scancode, keymod, .. }

@@ -62,6 +62,8 @@ pub trait GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
         Data: Clone {
     fn state(&self) -> GameObjectState<Img, Spr, Data>;
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>);
+
     /// Let game objects reset their data on room load. If you return true, the object is removed
     /// from the room
     fn on_reset(&mut self) -> bool;
@@ -88,11 +90,13 @@ pub trait GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
             imgs: &HashMap<Img, Image>, _snds: &HashMap<Snd, Sound>,
             _fonts: &HashMap<Fnt, Font>, _creator: &TextureCreator<WindowContext>,
             elapsed: f64) -> Result<(), String> {
-        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
+        let mut state = self.state().clone();
+        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = state;
         if let Some(spr) = sprs.get_mut(cur_spr) {
             spr.update(elapsed);
             spr.render(cnv, imgs, (pos.0 as i32, pos.1 as i32))?;
         }
+        self.set_state(&state);
         Ok(())
     }
 }
@@ -336,11 +340,11 @@ impl<ImgId> Frame<ImgId> where ImgId: Hash + Eq + Clone + Copy {
 /// A collection of different animation frames that can be moved around a screen
 #[derive(Clone)]
 pub struct Sprite<Img> where Img: IndexRestriction {
-    frames: Vec<Frame<Img>>,
+    pub frames: Vec<Frame<Img>>,
     pub anim_spd: f64,
     pub origin: (i32, i32),
     pub anim_idx: usize,
-    anim_idx_smooth: f64,
+    pub anim_idx_smooth: f64,
     pub scale: (f64, f64),
     pub angle: f64,
     pub flip: (bool, bool)
@@ -360,8 +364,8 @@ impl<Img> Sprite<Img> where Img: IndexRestriction {
         }
     }
 
-    pub fn update(&mut self, delta: f64) {
-        self.anim_idx_smooth += delta * self.anim_spd;
+    pub fn update(&mut self, elapsed: f64) {
+        self.anim_idx_smooth += elapsed * self.anim_spd;
         if self.anim_idx_smooth > 1.0 {
             if self.anim_idx + 1 >= self.frames.len() {
                 self.anim_idx = 0;

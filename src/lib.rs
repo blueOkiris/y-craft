@@ -6,6 +6,7 @@ pub mod res;
 pub mod obj;
 pub mod room;
 pub mod app;
+pub mod util;
 
 /// Y-Craft generically uses hypothetical enums to index various things, and there are restrictions
 /// on these enums for the user
