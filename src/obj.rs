@@ -188,12 +188,12 @@ impl CollisionShape {
                         );
                         if other_center.0 < rect.x {
                             test.0 = rect.x;
-                        } else if center.0 > rect.x + rect.w {
+                        } else if other_center.0 > rect.x + rect.w {
                             test.0 = rect.x + rect.w;
                         }
                         if other_center.1 < rect.y {
                             test.1 = rect.y;
-                        } else if center.1 > rect.y + rect.h {
+                        } else if other_center.1 > rect.y + rect.h {
                             test.1 = rect.y + rect.h;
                         }
                         let dist_lat = (other_center.0 - test.0, other_center.1 - test.1);

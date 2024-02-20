@@ -28,7 +28,8 @@ pub enum Spr {
     Title,
     Head,
     Body,
-    Tail
+    Tail,
+    Mouse
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

@@ -7,10 +7,11 @@ use sdl2::{
     video::Window
 };
 use crate::{
-    res::{
-        Image, Font, Sound
-    }, obj::GameObjectBehavior,
-    IndexRestriction
+    obj::{
+        CollisionShape, GameObjectBehavior
+    }, res::{
+        Font, Image, Sound
+    }, IndexRestriction
 };
 
 #[derive(Clone)]
@@ -60,13 +61,39 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
                 (ret, objs) = check_ret;
             }
         }
+        let others = self.objs.clone();
         for obj in self.objs.iter_mut() {
-            let collider = obj.state().collider;
+            let mut collider = obj.state().collider;
+
+            // Adjust collider for position
+            match collider {
+                CollisionShape::Rect { ref mut center, .. } => {
+                    center.0 += obj.state().pos.0 as i32;
+                    center.1 += obj.state().pos.1 as i32;
+                }, CollisionShape::Circle { ref mut center, .. } => {
+                    center.0 += obj.state().pos.0 as i32;
+                    center.1 += obj.state().pos.1 as i32;
+                }
+            }
+
             for other in others.iter() {
                 if obj.state().name == other.state().name {
                     continue;
                 }
-                let other_collider = other.state().collider;
+
+                let mut other_collider = other.state().collider;
+
+                // Also adjust other collider
+                match other_collider {
+                    CollisionShape::Rect { ref mut center, .. } => {
+                        center.0 += other.state().pos.0 as i32;
+                        center.1 += other.state().pos.1 as i32;
+                    }, CollisionShape::Circle { ref mut center, .. } => {
+                        center.0 += other.state().pos.0 as i32;
+                        center.1 += other.state().pos.1 as i32;
+                    }
+                }
+
                 if collider.collides_with(&other_collider) {
                     obj.on_collision(&other);
                 }

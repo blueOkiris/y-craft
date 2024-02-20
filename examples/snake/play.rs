@@ -1,6 +1,7 @@
 //! The main room for the snake game
 
 use std::collections::HashMap;
+use rand::Rng;
 use sdl2::{
     event::Event,
     keyboard::Scancode,
@@ -323,6 +324,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeTail {
 
     fn on_reset(&mut self) -> bool {
         let nw = SnakeTail::new();
+        self.state = nw.state;
+        self.last_pos = nw.last_pos;
+        self.dir = nw.dir;
+        self.last_dir = nw.dir;
         false
     }
 
@@ -361,14 +366,67 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeTail {
     }
 }
 
+#[derive(Clone)]
+struct Mouse {
+    state: GameObjectState<Img, Spr, Data>
+}
+
+impl Mouse {
+    pub fn new() -> Self {
+        Self {
+            state: GameObjectState {
+                name: "mouse".to_string(),
+                pos: Self::random_mouse_pos(),
+                cur_spr: Spr::Mouse,
+                sprs: HashMap::from([(
+                    Spr::Mouse,
+                    Sprite::new(
+                        vec![ Frame::new(Img::Mouse, Rect::new(0, 0, 32, 32), (32, 32)) ],
+                        0.0, (16, 16)
+                    )
+                )]), collider: CollisionShape::Circle { center: (0, 0), radius: 15 },
+                custom: Data::Mouse
+            }
+        }
+    }
+
+    fn random_mouse_pos() -> (f64, f64) {
+        let mut rng = rand::thread_rng();
+        (
+            (rng.gen_range(32.0..640.0 - 96.0) / 32.0 as f64).floor() * 32.0 + 16.0,
+            (rng.gen_range(32.0..360.0 - 96.0) / 32.0 as f64).floor() * 32.0 + 16.0
+        )
+    }
+}
+
+impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Mouse {
+    fn state(&self) -> GameObjectState<Img, Spr, Data> {
+        self.state.clone()
+    }
+
+    fn on_reset(&mut self) -> bool {
+        let nw = Mouse::new();
+        self.state = nw.state;
+        false
+    }
+
+    fn on_collision(
+            &mut self,
+            other: &Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>) {
+        if let Data::Head { .. } = other.state().custom {
+            self.on_reset();
+        }
+    }
+}
+
 pub fn play() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
     Room::new(
         vec![
             Box::new(SnakeHead::new()),
             Box::new(SnakeBody::new(0, (640.0 / 2.0 + 32.0 / 2.0, 352.0 / 2.0))),
             Box::new(SnakeBody::new(1, (640.0 / 2.0 - 32.0 / 2.0, 352.0 / 2.0))),
-            Box::new(SnakeTail::new())
-            //Mouse
+            Box::new(SnakeTail::new()),
+            Box::new(Mouse::new())
         ], false
     )
 }

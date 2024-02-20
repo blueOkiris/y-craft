@@ -31,7 +31,7 @@ fn main() -> Result<(), String> {
         (Fnt::Geist, 20, "fonts/Geist/GeistVariableVF.ttf")
     ];
 
-    let mut rooms = HashMap::from([
+    let rooms = HashMap::from([
         (Rm::Title, title::title()),
         (Rm::Play, play::play())
     ]);
