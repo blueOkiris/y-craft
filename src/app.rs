@@ -14,17 +14,24 @@ use sdl2::{
     }, pixels::Color
 };
 use crate::{
+    obj::ControlObjectBehavior,
     res::{
         Font,
         Image,
         Sound
-    }, room::Room,
-    IndexRestriction
+    }, room::Room, IndexRestriction
 };
 
+/// Create a window and run the game
+///
+/// - Title, width, height, fps, and bg_color all refer to window params
+/// - start_room and rooms are the "scenes" of your game
+/// - ctl_objs are objects that are updated and exist outside of the room
+/// - snd_srcs, img_srcs, and font_srcs are file paths to resources
 pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     title: &str, width: u32, height: u32, fps: f64, bg_color: &Color,
     start_room: Rm, rooms: &HashMap<Rm, Room<Img, Snd, Fnt, Spr, Rm, Data>>,
+    ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
     snd_srcs: &[(Snd, &str)], img_srcs: &[(Img, &str)],
     font_srcs: &[(Fnt, u16, &str)]) -> Result<(), String> where
         Spr: IndexRestriction,
@@ -68,6 +75,7 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     }
 
     let mut rooms = rooms.clone();
+    let mut ctl_objs = ctl_objs.clone();
 
     // Create a timed 60fps game loop
     let mut room_reset = false;
@@ -91,6 +99,10 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
             }
 
             // Update
+            
+            // TODO: ADD GLOBAL OBJECTS (OUTSIDE ROOMS)
+            // TODO: ADD PRE-EMPTIVE COLLISIONS
+
             for event in event_pump.poll_iter() {
                 match event {
                     Event::KeyUp { scancode, .. } if scancode == Some(Scancode::F4) => {
@@ -100,12 +112,33 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
                     }, _ => {}
                 }
                 rm.handle_sdl_event(&event);
+                for obj in ctl_objs.iter_mut() {
+                    obj.handle_sdl_event(&event);
+                }
             }
-            let new_room = rm.update(delta);
+            let other_ctls = ctl_objs.clone();
+            let mut new_room = rm.update(delta, &other_ctls);
+            let rm_objs = rm.objs.clone();
+            let mut to_add = vec![];
+            for obj in ctl_objs.iter_mut() {
+                let ret = obj.update(delta, &room, &other_ctls, &rm_objs);
+                if ret.0.is_some() && new_room.is_none() {
+                    new_room = ret.0;
+                }
+                if ret.1.len() > 0 && to_add.len() < 1 {
+                    to_add = ret.1.clone();
+                }
+            }
+            if to_add.len() > 0 {
+                rm.objs.append(&mut to_add);
+            }
 
             if elapsed > 1.0 / fps {
                 cnv.set_draw_color(*bg_color);
                 rm.render(&mut cnv, &imgs, &snds, &fonts, &creator, elapsed)?;
+                for obj in ctl_objs.iter_mut() {
+                    obj.render(&mut cnv, &room, &imgs, &snds, &fonts, &creator, elapsed)?;
+                }
                 cnv.present();
                 elapsed = 0.0;
             }

@@ -70,6 +70,7 @@ pub trait GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
     /// add to the room.
     fn update(
             &mut self, _delta: f64,
+            _ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
             _others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
                 Option<Rm>, Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
             ) {
@@ -123,6 +124,75 @@ impl<Img, Snd, Fnt, Spr, Rm, Data, T>
 
 impl<Img, Snd, Fnt, Spr, Rm, Data> Clone
     for Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn clone(&self) -> Self {
+        self.clone_box()
+    }
+}
+
+/// Control objects are basically game objects, but they are aware of the current room and do not
+/// possess colliders. They are the way for doing dynamic memory
+pub trait ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
+    ControlObjectBehaviorClone<Img, Snd, Fnt, Spr, Rm, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn data(&self) -> Data;
+    
+    fn handle_sdl_event(&mut self, _event: &Event) {}
+
+    fn update(
+            &mut self, _delta: f64, _cur_room: &Rm,
+            _others: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
+            _room_objs: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
+                Option<Rm>, Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
+            ) {
+        (None, vec![])
+    }
+
+    fn render(
+            &mut self, _cnv: &mut Canvas<Window>, _cur_room: &Rm,
+            _imgs: &HashMap<Img, Image>, _snds: &HashMap<Snd, Sound>,
+            _fonts: &HashMap<Fnt, Font>, _creator: &TextureCreator<WindowContext>,
+            _elapsed: f64) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+pub trait ControlObjectBehaviorClone<Img, Snd, Fnt, Spr, Rm, Data> where
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn clone_box(&self) -> Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>;
+}
+
+impl<Img, Snd, Fnt, Spr, Rm, Data, T>
+    ControlObjectBehaviorClone<Img, Snd, Fnt, Spr, Rm, Data> for T where
+        T: 'static + ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> + Clone,
+        Spr: IndexRestriction,
+        Img: IndexRestriction,
+        Snd: IndexRestriction,
+        Fnt: IndexRestriction,
+        Rm: IndexRestriction,
+        Data: Clone {
+    fn clone_box(&self) -> Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>> {
+        Box::new(self.clone())
+    }
+}
+
+impl<Img, Snd, Fnt, Spr, Rm, Data> Clone
+    for Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>> where
         Spr: IndexRestriction,
         Img: IndexRestriction,
         Snd: IndexRestriction,

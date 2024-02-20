@@ -3,12 +3,13 @@
 use std::collections::HashMap;
 use rand::Rng;
 use sdl2::{
-    event::Event, keyboard::Scancode, pixels::Color, rect::Rect, render::TextureCreator, video::WindowContext
+    event::Event,
+    keyboard::Scancode,
+    rect::Rect
 };
 use ycraft::{
     obj::{
-        CollisionShape, GameObjectBehavior, GameObjectState,
-        Frame, Sprite
+        CollisionShape, ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
     }, room::Room
 };
 use crate::game::{
@@ -30,7 +31,6 @@ struct SnakeHead {
     inter_pos: (f64, f64),
     can_change_dir: bool,
     add_body_seg: bool,
-    score: usize,
     should_die: bool
 }
 
@@ -57,7 +57,6 @@ impl SnakeHead {
             inter_pos: pos,
             can_change_dir: true,
             add_body_seg: false,
-            score: 4,
             should_die: false
         }
     }
@@ -119,12 +118,21 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
 
     fn update(
             &mut self, delta: f64,
+            ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
             others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
                 Option<Rm>,
                 Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
             ) {
+        let mut score = 0;
+        for obj in ctl_objs.iter() {
+            if let Data::Score(sc) = obj.data() {
+                score = sc;
+                break;
+            }
+        }
         let mut added_objs: Vec<Box<dyn GameObjectBehavior<_, _, _, _, _, _>>> = Vec::new();
-        if let Data::Head { ref mut dir, ref mut lurch_propagation } = self.state.custom {
+        if let Data::Head { ref mut dir, ref mut lurch_propagation } =
+                self.state.custom {
             match dir {
                 Dir::Up => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -134,7 +142,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.1.floor() < self.state.pos.1 - 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.1 -= 32.0;
-                        *lurch_propagation = self.score;
+                        *lurch_propagation = score;
                     }
                 }, Dir::Down => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -144,7 +152,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.1.floor() > self.state.pos.1 + 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.1 += 32.0;
-                        *lurch_propagation = self.score;
+                        *lurch_propagation = score;
                     }
                 }, Dir::Left => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -154,7 +162,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.0.floor() < self.state.pos.0 - 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.0 -= 32.0;
-                        *lurch_propagation = self.score;
+                        *lurch_propagation = score;
                     }
                 }, Dir::Right => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -164,7 +172,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.0.floor() > self.state.pos.0 + 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.0 += 32.0;
-                        *lurch_propagation = self.score;
+                        *lurch_propagation = score;
                     }
                 }
             }
@@ -186,13 +194,6 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                 added_objs.push(Box::new(SnakeBody::new(max_body + 1, max_body_pos)));
                 self.add_body_seg = false;
                 self.move_spd += MOVE_SPD_INC;
-            }
-        
-            self.score = 2; // Start with tail and head
-            for obj in others.iter() {
-                if let Data::Body { .. } = obj.state().custom {
-                    self.score += 1;
-                }
             }
 
             if self.state.pos.0 < 32.0 || self.state.pos.1 < 32.0
@@ -221,24 +222,6 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
             }
             _ => {}
         }
-    }
-
-    fn render(
-            &mut self, cnv: &mut sdl2::render::Canvas<sdl2::video::Window>,
-            imgs: &HashMap<Img, ycraft::res::Image>, _snds: &HashMap<Snd, ycraft::res::Sound>,
-            fonts: &HashMap<Fnt, ycraft::res::Font>, creator: &TextureCreator<WindowContext>,
-            elapsed: f64) -> Result<(), String> {
-        fonts[&Fnt::Geist].render(
-            cnv, creator, format!("Score: {}", self.score).as_str(), &Color::WHITE,
-            (16, 16), 0.0, (false, false)
-        )?;
-
-        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
-        if let Some(spr) = sprs.get_mut(cur_spr) {
-            spr.update(elapsed);
-            spr.render(cnv, imgs, (pos.0 as i32, pos.1 as i32))?;
-        }
-        Ok(())
     }
 }
 
@@ -298,6 +281,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeBody {
 
     fn update(
             &mut self, _delta: f64,
+            _ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
             others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
                 Option<Rm>,
                 Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
@@ -383,6 +367,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeTail {
 
     fn update(
             &mut self, _delta: f64,
+            _ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
             others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
                 Option<Rm>, Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
             ) {

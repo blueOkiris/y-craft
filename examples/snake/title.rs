@@ -1,7 +1,6 @@
 //! Game objects and room code for title screen
 
 use std::collections::HashMap;
-
 use sdl2::{
     event::Event,
     keyboard::Scancode,
@@ -9,8 +8,7 @@ use sdl2::{
 };
 use ycraft::{
     obj::{
-        CollisionShape, GameObjectBehavior, GameObjectState,
-        Frame, Sprite
+        CollisionShape, ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
     }, room::Room
 };
 use crate::game::{
@@ -64,6 +62,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for TitleScreenImage {
 
     fn update(
             &mut self, _delta: f64,
+            _ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>,
             _others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
                 Option<Rm>,
                 Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>

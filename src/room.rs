@@ -11,7 +11,7 @@ use sdl2::{
 };
 use crate::{
     obj::{
-        CollisionShape, GameObjectBehavior
+        CollisionShape, ControlObjectBehavior, GameObjectBehavior
     }, res::{
         Font, Image, Sound
     }, IndexRestriction
@@ -51,12 +51,15 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
         }
     }
 
-    pub fn update(&mut self, delta: f64) -> Option<Rm> {
+    pub fn update(
+            &mut self, delta: f64,
+            ctl_objs: &Vec<Box<dyn ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
+            ) -> Option<Rm> {
         let others = self.objs.clone();
         let mut ret = None;
         let mut objs = Vec::new();
         for obj in self.objs.iter_mut() {
-            let check_ret = obj.update(delta, &others);
+            let check_ret = obj.update(delta, ctl_objs, &others);
             if check_ret.0.is_some() && ret.is_none() && objs.len() < 1 {
                 (ret, objs) = check_ret.clone();
             }
