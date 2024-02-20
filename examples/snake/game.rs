@@ -18,8 +18,9 @@ use ycraft::{
 };
 use crate::play::Dir;
 
-pub const BASE_MOVE_SPD: f64 = 32.0;
-pub const MOVE_SPD_INC: f64 = 8.0;
+pub const BASE_MOVE_SPD: f64 = 24.0;
+pub const MOVE_SPD_INC: f64 = 4.0;
+const END_STATE: usize = ((640 - 64) / 32) * ((360 - 64) / 32);
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Img {
@@ -112,7 +113,7 @@ impl ControlObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Score {
                         *score += 1;
                     }
                 }
-                if *score >= 10 {
+                if *score >= END_STATE {
                     return (Some(Rm::Win), vec![]);
                 }
             }, Rm::Dead => {},
