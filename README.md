@@ -36,5 +36,7 @@ Requirements:
 
 Note: Nix users can create a valid shell via nix-shell
 
-Run `cargo build --release` to build the binary
+Run `cargo build --release` to build the library
+
+Run `cargo run --release --example <example-name>` to run the examples.
 
