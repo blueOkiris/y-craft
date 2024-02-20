@@ -8,10 +8,10 @@ use std::{
 };
 use sdl2::{
     event::Event,
-    keyboard::Scancode,
+    keyboard::{Mod, Scancode},
     mixer::{
         InitFlag, AUDIO_S16LSB, DEFAULT_CHANNELS
-    }, pixels::Color
+    }, pixels::Color, video::FullscreenType
 };
 use crate::{
     obj::ControlObjectBehavior,
@@ -91,6 +91,7 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     let mut start = Instant::now();
     let mut elapsed = 0.0;
     let mut room = start_room;
+    let mut is_fullscreen = false;
     'game: loop {
         // Maintain fps
         std::thread::sleep(Duration::from_millis(1)); // Force a sleep bc CPU is really fast lol
@@ -113,8 +114,16 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
 
             for event in event_pump.poll_iter() {
                 match event {
-                    Event::KeyUp { scancode, .. } if scancode == Some(Scancode::F4) => {
-                        break 'game;
+                    Event::KeyUp { scancode, keymod, .. }
+                            if scancode == Some(Scancode::Return)
+                                && keymod.contains(Mod::LALTMOD) => {
+                        cnv.window_mut().set_fullscreen(if is_fullscreen {
+                            is_fullscreen = false;
+                            FullscreenType::Off
+                        } else {
+                            is_fullscreen = true;
+                            FullscreenType::True
+                        })?;
                     }, Event::Quit { .. } => {
                         break 'game;
                     }, _ => {}
