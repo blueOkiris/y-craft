@@ -28,15 +28,25 @@ Resources, Rooms, and Game Objects are all indexed by your own enums. Containers
 
 Requirements:
 
-- Rust
-- Cmake
-- Probably Linux system
-  + May work on other \*nix or even Windows/Mac if set up correctly
-  + Only Linux systems are officially supported tho
+- [Rust](https://rustup.rs/)
+- SDL2 dev libraries
+- Linux\*
+   + \*It should work on \*nix, MacOS, and Windows (tested on this too), but only Linux is officially supported. Other platforms may not get help in issues
 
-Note: Nix users can create a valid shell via nix-shell
+Notes:
 
-Run `cargo build --release` to build the library
+- Nix users can create a valid shell via nix-shell. Easy peasy.
+- For Windows users it's never so easy-peasy. To get the SDL2 dev libraries they need to:
+   + Download the "\*-devel-\*-VC.zip" files from the respective release pages for the [SDL2](https://github.com/libsdl-org/SDL/releases), [SDL2_mixer](https://github.com/libsdl-org/SDL_mixer/releases), [SDL2_image](https://github.com/libsdl-org/SDL_mixer/releases), and [SDL2_ttf](https://github.com/libsdl-org/SDL_ttf/releases) libraries
+   + Extract the ".lib" and ".dll" files, usually under "lib/x64/"
+   + Place them in your Rust library folder. If using rustup as linked above, put them in `C:\Users\<your user>\.rustup\toolchains\stable-x86_64-pc-windows-msvc\lib\rustlib\x86_64-pc-windows-msvc`
+   + For more info, consult the README of the [sdl2 crate GitHub](https://github.com/Rust-SDL2/rust-sdl2)
 
-Run `cargo run --release --example <example-name>` to run the examples.
+To just build the library, do `cargo build --release`.
+
+To run the examples, do `cargo run --release --example <example-name>` to run the examples. The binary for the examples will be in `./target/<your target/examples/<example-name>` if you wish to run it that way.
+
+To include in your Rust project, I recommend just `y-craft = "0.<version>"` and ignore the latest release as no releases will have breaking changes, only true version bumps.
+
+If you want to distribute your application, you will need to make sure the target system receives SDL2, SDL2_mixer, SDL2_image, and SDL2_ttf. On Linux, this is simple as you can make a package and put the dependencies the distro's SDL libraries. On Windows, you will need to place the various .dlls in the same folder as the binary.
 
