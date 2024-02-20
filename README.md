@@ -50,3 +50,8 @@ To include in your Rust project, I recommend just `y-craft = "0.<version>"` and 
 
 If you want to distribute your application, you will need to make sure the target system receives SDL2, SDL2_mixer, SDL2_image, and SDL2_ttf. On Linux, this is simple as you can make a package and put the dependencies the distro's SDL libraries. On Windows, you will need to place the various .dlls in the same folder as the binary.
 
+## Examples
+
+- snake - a snake clone. Fill the entire screen to win. Don't hit the walls or your body
+- platformer - example of how to implement platformer physics
+
