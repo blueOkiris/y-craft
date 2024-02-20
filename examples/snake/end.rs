@@ -47,6 +47,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for DeadScreen {
         self.state.clone()
     }
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
+    }
+
     fn on_reset(&mut self) -> bool {
         self.change_room = false;
         false
@@ -107,6 +111,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for WinScreen {
         self.state.clone()
     }
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
+    }
+
     fn on_reset(&mut self) -> bool {
         self.change_room = false;
         false
@@ -142,3 +150,4 @@ pub fn dead() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
 pub fn win() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
     Room::new(vec![ Box::new(WinScreen::new()) ], false)
 }
+

@@ -69,6 +69,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
         self.state.clone()
     }
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
+    }
+
     fn on_reset(&mut self) -> bool {
         let nw = SnakeHead::new();
         self.state = nw.state;
@@ -240,11 +244,13 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
         }
 
         // Default render
-        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
+        let mut state = self.state().clone();
+        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = state;
         if let Some(spr) = sprs.get_mut(cur_spr) {
             spr.update(elapsed);
             spr.render(cnv, imgs, (pos.0 as i32, pos.1 as i32))?;
         }
+        self.set_state(&state);
         Ok(())
     }
 }
@@ -285,6 +291,10 @@ impl SnakeBody {
 impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeBody {
     fn state(&self) -> GameObjectState<Img, Spr, Data> {
         self.state.clone()
+    }
+
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
     }
 
     fn on_reset(&mut self) -> bool {
@@ -380,6 +390,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeTail {
         self.state.clone()
     }
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
+    }
+
     fn on_reset(&mut self) -> bool {
         let nw = SnakeTail::new();
         self.state = nw.state;
@@ -463,6 +477,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Mouse {
         self.state.clone()
     }
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
+    }
+
     fn on_reset(&mut self) -> bool {
         let nw = Mouse::new();
         self.state = nw.state;
@@ -507,6 +525,10 @@ impl Board {
 impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Board {
     fn state(&self) -> GameObjectState<Img, Spr, Data> {
         self.state.clone()
+    }
+
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
     }
 
     fn on_reset(&mut self) -> bool {

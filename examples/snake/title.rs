@@ -47,6 +47,10 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for TitleScreenImage {
         self.state.clone()
     }
 
+    fn set_state(&mut self, new_state: &GameObjectState<Img, Spr, Data>) {
+        self.state = new_state.clone();
+    }
+
     fn on_reset(&mut self) -> bool {
         self.change_room = false;
         false
