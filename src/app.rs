@@ -13,7 +13,6 @@ use sdl2::{
     }, mixer::{
         InitFlag, AUDIO_S16LSB, DEFAULT_CHANNELS
     }, pixels::Color,
-    rect::Rect,
     video::FullscreenType
 };
 use crate::{
