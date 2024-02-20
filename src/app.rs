@@ -7,11 +7,14 @@ use std::{
     }
 };
 use sdl2::{
-    event::Event,
-    keyboard::{Mod, Scancode},
-    mixer::{
+    event::{Event, WindowEvent},
+    keyboard::{
+        Mod, Scancode
+    }, mixer::{
         InitFlag, AUDIO_S16LSB, DEFAULT_CHANNELS
-    }, pixels::Color, video::FullscreenType
+    }, pixels::Color,
+    rect::Rect,
+    video::FullscreenType
 };
 use crate::{
     obj::ControlObjectBehavior,
@@ -45,11 +48,16 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
     let subsys = ctx.video()?;
     let win = subsys
         .window(title, width, height)
+        .resizable()
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
     let mut event_pump = ctx.event_pump()?;
-    let mut cnv = win.into_canvas().build().map_err(|e| e.to_string())?;
+    let mut cnv = win.into_canvas()
+        .accelerated()
+        .present_vsync()
+        .build()
+        .map_err(|e| e.to_string())?;
     let creator = cnv.texture_creator();
     
     let ttf_ctx = sdl2::ttf::init().map_err(|e| e.to_string())?;
@@ -121,6 +129,10 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
                             is_fullscreen = true;
                             FullscreenType::True
                         })?;
+                    }, Event::Window { win_event, .. } => {
+                        if let WindowEvent::Resized(w, h) = win_event {
+                            cnv.set_scale(w as f32 / width as f32, h as f32 / height as f32)?;
+                        }
                     }, Event::Quit { .. } => {
                         break 'game;
                     }, _ => {}
@@ -148,6 +160,7 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
             }
 
             if elapsed > 1.0 / fps {
+                cnv.clear();
                 cnv.set_draw_color(*bg_color);
                 rm.render(&mut cnv, &imgs, &snds, &fonts, &creator, elapsed)?;
                 for obj in ctl_objs.iter_mut() {
