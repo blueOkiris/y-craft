@@ -3,8 +3,11 @@
 use std::collections::HashMap;
 use sdl2::{
     event::Event,
-    render::Canvas,
-    video::Window
+    render::{
+        Canvas, TextureCreator
+    }, video::{
+        Window, WindowContext
+    }
 };
 use crate::{
     obj::{
@@ -106,11 +109,11 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
     pub fn render(
             &mut self, cnv: &mut Canvas<Window>,
             imgs: &HashMap<Img, Image>, snds: &HashMap<Snd, Sound>,
-            fonts: &HashMap<Fnt, Font>,
+            fonts: &HashMap<Fnt, Font>, creator: &TextureCreator<WindowContext>,
             elapsed: f64) -> Result<(), String> {
         cnv.clear();
         for obj in self.objs.iter_mut() {
-            obj.render(cnv, imgs, snds, fonts, elapsed)?;
+            obj.render(cnv, imgs, snds, fonts, creator, elapsed)?;
         }
         Ok(())
     }

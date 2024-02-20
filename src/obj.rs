@@ -7,8 +7,11 @@ use std::{
 use sdl2::{
     event::Event,
     rect::Rect,
-    render::Canvas,
-    video::Window
+    render::{
+        Canvas, TextureCreator
+    }, video::{
+        Window, WindowContext
+    }
 };
 use crate::{
     res::{
@@ -82,7 +85,7 @@ pub trait GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
     fn render(
             &mut self, cnv: &mut Canvas<Window>,
             imgs: &HashMap<Img, Image>, _snds: &HashMap<Snd, Sound>,
-            _fonts: &HashMap<Fnt, Font>,
+            _fonts: &HashMap<Fnt, Font>, _creator: &TextureCreator<WindowContext>,
             elapsed: f64) -> Result<(), String> {
         let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
         if let Some(spr) = sprs.get_mut(cur_spr) {

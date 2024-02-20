@@ -49,11 +49,11 @@ pub enum Data {
     Title,
     Head {
         dir: Dir,
+        lurch_propagation: usize
     }, Body {
         index: isize,
-        dir: Dir,
-    }, Tail,
-    Mouse,
+        dir: Dir
+    }, Tail, Mouse,
     Board,
     Dead
 }

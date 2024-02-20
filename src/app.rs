@@ -105,7 +105,7 @@ pub fn run<'a, 'b, Img, Snd, Fnt, Spr, Rm, Data>(
 
             if elapsed > 1.0 / fps {
                 cnv.set_draw_color(*bg_color);
-                rm.render(&mut cnv, &imgs, &snds, &fonts, elapsed)?;
+                rm.render(&mut cnv, &imgs, &snds, &fonts, &creator, elapsed)?;
                 cnv.present();
                 elapsed = 0.0;
             }

@@ -3,9 +3,7 @@
 use std::collections::HashMap;
 use rand::Rng;
 use sdl2::{
-    event::Event,
-    keyboard::Scancode,
-    rect::Rect
+    event::Event, keyboard::Scancode, pixels::Color, rect::Rect, render::TextureCreator, video::WindowContext
 };
 use ycraft::{
     obj::{
@@ -32,6 +30,7 @@ struct SnakeHead {
     inter_pos: (f64, f64),
     can_change_dir: bool,
     add_body_seg: bool,
+    score: usize,
     should_die: bool
 }
 
@@ -51,12 +50,14 @@ impl SnakeHead {
                         0.0, (16, 16)
                     )
                 )]), custom: Data::Head {
-                    dir: Dir::Right
+                    dir: Dir::Right,
+                    lurch_propagation: 0
                 }
             }, move_spd: BASE_MOVE_SPD,
             inter_pos: pos,
             can_change_dir: true,
             add_body_seg: false,
+            score: 4,
             should_die: false
         }
     }
@@ -81,7 +82,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
     fn handle_sdl_event(&mut self, event: &Event) {
         match event {
             Event::KeyDown { scancode, .. } => if scancode.is_some() {
-                if let Data::Head { ref mut dir } = self.state.custom {
+                if let Data::Head { ref mut dir, .. } = self.state.custom {
                     if self.can_change_dir {
                         // Keep how much you've moved in a dir when switching.
                         // This keeps each increment the same time length.
@@ -123,7 +124,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                 Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
             ) {
         let mut added_objs: Vec<Box<dyn GameObjectBehavior<_, _, _, _, _, _>>> = Vec::new();
-        if let Data::Head { ref mut dir } = self.state.custom {
+        if let Data::Head { ref mut dir, ref mut lurch_propagation } = self.state.custom {
             match dir {
                 Dir::Up => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -133,6 +134,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.1.floor() < self.state.pos.1 - 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.1 -= 32.0;
+                        *lurch_propagation = self.score;
                     }
                 }, Dir::Down => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -142,6 +144,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.1.floor() > self.state.pos.1 + 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.1 += 32.0;
+                        *lurch_propagation = self.score;
                     }
                 }, Dir::Left => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -151,6 +154,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.0.floor() < self.state.pos.0 - 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.0 -= 32.0;
+                        *lurch_propagation = self.score;
                     }
                 }, Dir::Right => {
                     if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
@@ -160,8 +164,12 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                     if self.inter_pos.0.floor() > self.state.pos.0 + 32.0 {
                         self.can_change_dir = true;
                         self.state.pos.0 += 32.0;
+                        *lurch_propagation = self.score;
                     }
                 }
+            }
+            if *lurch_propagation > 0 {
+                *lurch_propagation -= 1;
             }
 
             if self.add_body_seg {
@@ -179,11 +187,19 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
                 self.add_body_seg = false;
                 self.move_spd += MOVE_SPD_INC;
             }
+        
+            self.score = 2; // Start with tail and head
+            for obj in others.iter() {
+                if let Data::Body { .. } = obj.state().custom {
+                    self.score += 1;
+                }
+            }
 
             if self.state.pos.0 < 32.0 || self.state.pos.1 < 32.0
                     || self.state.pos.0 > 640.0 - 32.0 || self.state.pos.1 > 360.0 - 32.0 {
                 return (Some(Rm::Dead), vec![]);
             }
+
             if self.should_die {
                 return (Some(Rm::Dead), vec![]);
             }
@@ -196,9 +212,33 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
             other: &Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>) {
         match other.state().custom {
             Data::Mouse => self.add_body_seg = true,
-            Data::Body { .. } | Data::Tail => self.should_die = true,
+            Data::Tail | Data::Body { .. } => {
+                if let Data::Head { lurch_propagation, .. } = self.state.custom {
+                    if lurch_propagation == 0 {
+                        self.should_die = true;
+                    }
+                }
+            }
             _ => {}
         }
+    }
+
+    fn render(
+            &mut self, cnv: &mut sdl2::render::Canvas<sdl2::video::Window>,
+            imgs: &HashMap<Img, ycraft::res::Image>, _snds: &HashMap<Snd, ycraft::res::Sound>,
+            fonts: &HashMap<Fnt, ycraft::res::Font>, creator: &TextureCreator<WindowContext>,
+            elapsed: f64) -> Result<(), String> {
+        fonts[&Fnt::Geist].render(
+            cnv, creator, format!("Score: {}", self.score).as_str(), &Color::WHITE,
+            (16, 16), 0.0, (false, false)
+        )?;
+
+        let GameObjectState { ref mut sprs, ref mut cur_spr, pos, .. } = self.state();
+        if let Some(spr) = sprs.get_mut(cur_spr) {
+            spr.update(elapsed);
+            spr.render(cnv, imgs, (pos.0 as i32, pos.1 as i32))?;
+        }
+        Ok(())
     }
 }
 
@@ -269,19 +309,17 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeBody {
                 format!("snake_body_{}", *index - 1)
             };
             for other in others.iter() {
-                if *other.state().name == parent_id {
-                    if other.state().pos != self.last_pos {
-                        self.state.pos = self.last_pos;
-                        *dir = self.last_dir;
-                        self.last_pos = other.state().pos;
-                        if *index == 0 {
-                            if let Data::Head { dir: other_dir, .. } = other.state().custom {
-                                self.last_dir = other_dir;
-                            }
-                        } else {
-                            if let Data::Body { dir: other_dir, .. } = other.state().custom {
-                                self.last_dir = other_dir;
-                            }
+                if *other.state().name == parent_id && other.state().pos != self.last_pos {
+                    self.state.pos = self.last_pos;
+                    *dir = self.last_dir;
+                    self.last_pos = other.state().pos;
+                    if *index == 0 {
+                        if let Data::Head { dir: other_dir, .. } = other.state().custom {
+                            self.last_dir = other_dir;
+                        }
+                    } else {
+                        if let Data::Body { dir: other_dir, .. } = other.state().custom {
+                            self.last_dir = other_dir;
                         }
                     }
                 }
@@ -304,7 +342,7 @@ struct SnakeTail {
     state: GameObjectState<Img, Spr, Data>,
     dir: Dir,
     last_dir: Dir,
-    last_pos: (f64, f64)
+    last_pos: (f64, f64),
 }
 
 impl SnakeTail {
@@ -324,7 +362,7 @@ impl SnakeTail {
                 custom: Data::Tail
             }, dir: Dir::Right,
             last_dir: Dir::Right,
-            last_pos: (640.0 / 2.0 - 32.0 - 32.0 / 2.0, 352.0 / 2.0)
+            last_pos: (640.0 / 2.0 - 32.0 - 32.0 / 2.0, 352.0 / 2.0),
         }
     }
 }
@@ -470,12 +508,12 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Board {
 pub fn play() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
     Room::new(
         vec![
+            Box::new(Board::new()),
             Box::new(SnakeHead::new()),
             Box::new(SnakeBody::new(0, (640.0 / 2.0 + 32.0 / 2.0, 352.0 / 2.0))),
             Box::new(SnakeBody::new(1, (640.0 / 2.0 - 32.0 / 2.0, 352.0 / 2.0))),
             Box::new(SnakeTail::new()),
-            Box::new(Mouse::new()),
-            Box::new(Board::new())
+            Box::new(Mouse::new())
         ], false
     )
 }
