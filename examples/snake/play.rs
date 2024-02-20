@@ -135,50 +135,51 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for SnakeHead {
         let mut added_objs: Vec<Box<dyn GameObjectBehavior<_, _, _, _, _, _>>> = Vec::new();
         if let Data::Head { ref mut dir, ref mut lurch_propagation } =
                 self.state.custom {
-            match dir {
-                Dir::Up => {
-                    if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
-                        spr.angle = 0.0;
-                    }
-                    self.inter_pos.1 -= delta * self.move_spd;
-                    if self.inter_pos.1.floor() < self.state.pos.1 - 32.0 {
-                        self.can_change_dir = true;
-                        self.state.pos.1 -= 32.0;
-                        *lurch_propagation = score;
-                    }
-                }, Dir::Down => {
-                    if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
-                        spr.angle = 180.0;
-                    }
-                    self.inter_pos.1 += delta * self.move_spd;
-                    if self.inter_pos.1.floor() > self.state.pos.1 + 32.0 {
-                        self.can_change_dir = true;
-                        self.state.pos.1 += 32.0;
-                        *lurch_propagation = score;
-                    }
-                }, Dir::Left => {
-                    if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
-                        spr.angle = 270.0;
-                    }
-                    self.inter_pos.0 -= delta * self.move_spd;
-                    if self.inter_pos.0.floor() < self.state.pos.0 - 32.0 {
-                        self.can_change_dir = true;
-                        self.state.pos.0 -= 32.0;
-                        *lurch_propagation = score;
-                    }
-                }, Dir::Right => {
-                    if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
-                        spr.angle = 90.0;
-                    }
-                    self.inter_pos.0 += delta * self.move_spd;
-                    if self.inter_pos.0.floor() > self.state.pos.0 + 32.0 {
-                        self.can_change_dir = true;
-                        self.state.pos.0 += 32.0;
-                        *lurch_propagation = score;
+            if *lurch_propagation == 0 {
+                match dir {
+                    Dir::Up => {
+                        if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
+                            spr.angle = 0.0;
+                        }
+                        self.inter_pos.1 -= delta * self.move_spd;
+                        if self.inter_pos.1.floor() < self.state.pos.1 - 32.0 {
+                            self.can_change_dir = true;
+                            self.state.pos.1 -= 32.0;
+                            *lurch_propagation = score;
+                        }
+                    }, Dir::Down => {
+                        if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
+                            spr.angle = 180.0;
+                        }
+                        self.inter_pos.1 += delta * self.move_spd;
+                        if self.inter_pos.1.floor() > self.state.pos.1 + 32.0 {
+                            self.can_change_dir = true;
+                            self.state.pos.1 += 32.0;
+                            *lurch_propagation = score;
+                        }
+                    }, Dir::Left => {
+                        if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
+                            spr.angle = 270.0;
+                        }
+                        self.inter_pos.0 -= delta * self.move_spd;
+                        if self.inter_pos.0.floor() < self.state.pos.0 - 32.0 {
+                            self.can_change_dir = true;
+                            self.state.pos.0 -= 32.0;
+                            *lurch_propagation = score;
+                        }
+                    }, Dir::Right => {
+                        if let Some(spr) = self.state.sprs.get_mut(&self.state.cur_spr) {
+                            spr.angle = 90.0;
+                        }
+                        self.inter_pos.0 += delta * self.move_spd;
+                        if self.inter_pos.0.floor() > self.state.pos.0 + 32.0 {
+                            self.can_change_dir = true;
+                            self.state.pos.0 += 32.0;
+                            *lurch_propagation = score;
+                        }
                     }
                 }
-            }
-            if *lurch_propagation > 0 {
+            } else {
                 *lurch_propagation -= 1;
             }
 
