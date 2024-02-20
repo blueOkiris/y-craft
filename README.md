@@ -1,7 +1,5 @@
 # Y-Craft
 
-NOTE: NOT READY FOR PRODUCTION. WAIT FOR v1.0.0!
-
 ## Description
 
 A Rust port of the [x-craft](https://github.com/blueOkiris/x-craft/) engine. This is where the ongoing development of the engine will be. X-Craft is a dead project.
@@ -46,7 +44,7 @@ To just build the library, do `cargo build --release`.
 
 To run the examples, do `cargo run --release --example <example-name>`. The binary for the examples will be in `./target/release/<your target>/examples/<example-name>` if you wish to run it that way.
 
-To include in your Rust project, I recommend just `y-craft = "0.<version>"` and ignore the latest release as no releases will have breaking changes, only true version bumps.
+To include in your Rust project, I recommend just `y-craft = "0.<version>"` and ignore the release number as no releases will have breaking changes, only true version bumps.
 
 If you want to distribute your application, you will need to make sure the target system receives SDL2, SDL2_mixer, SDL2_image, and SDL2_ttf. On Linux, this is simple as you can make a package and put the dependencies the distro's SDL libraries. On Windows, you will need to place the various .dlls in the same folder as the binary.
 
