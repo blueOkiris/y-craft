@@ -44,7 +44,7 @@ Notes:
 
 To just build the library, do `cargo build --release`.
 
-To run the examples, do `cargo run --release --example <example-name>` to run the examples. The binary for the examples will be in `./target/<your target/examples/<example-name>` if you wish to run it that way.
+To run the examples, do `cargo run --release --example <example-name>`. The binary for the examples will be in `./target/release/<your target>/examples/<example-name>` if you wish to run it that way.
 
 To include in your Rust project, I recommend just `y-craft = "0.<version>"` and ignore the latest release as no releases will have breaking changes, only true version bumps.
 
