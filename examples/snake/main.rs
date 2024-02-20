@@ -19,16 +19,17 @@ const BG_COLOR: Color = Color::RGB(0x60, 0x60, 0x80);
 
 fn main() -> Result<(), String> {
     let snds = [
-        (Snd::Music, "audio/battleThemeA.mp3"),
-        (Snd::Bite, "audio/crack01.mp3.flac")
+        (Snd::Music, "examples/snake/audio/battleThemeA.mp3"),
+        (Snd::Bite, "examples/snake/audio/crack01.mp3.flac")
     ];
     let imgs = [
-        (Img::Title, "img/title.png"),
-        (Img::Snake, "img/snake.png"),
-        (Img::Mouse, "img/mouse.png")
+        (Img::Title, "examples/snake/img/title.png"),
+        (Img::Snake, "examples/snake/img/snake.png"),
+        (Img::Mouse, "examples/snake/img/mouse.png"),
+        (Img::Board, "examples/snake/img/board.png")
     ];
     let fonts = [
-        (Fnt::Geist, 20, "fonts/Geist/GeistVariableVF.ttf")
+        (Fnt::Geist, 20, "examples/snake/fonts/Geist/GeistVariableVF.ttf")
     ];
 
     let rooms = HashMap::from([

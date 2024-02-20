@@ -9,7 +9,8 @@ pub const MOVE_SPD_INC: f64 = 8.0;
 pub enum Img {
     Title,
     Snake,
-    Mouse
+    Mouse,
+    Board
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -29,13 +30,15 @@ pub enum Spr {
     Head,
     Body,
     Tail,
-    Mouse
+    Mouse,
+    Board
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Rm {
     Title,
-    Play
+    Play,
+    Dead
 }
 
 /// Used for sharing data between objects via GameObjectBehavior trait
@@ -48,6 +51,7 @@ pub enum Data {
         index: isize,
         dir: Dir,
     }, Tail,
-    Mouse
+    Mouse,
+    Board
 }
 

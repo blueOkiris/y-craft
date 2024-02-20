@@ -419,6 +419,42 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Mouse {
     }
 }
 
+#[derive(Clone)]
+struct Board {
+    state: GameObjectState<Img, Spr, Data>
+}
+
+impl Board {
+    pub fn new() -> Self {
+        Self {
+            state: GameObjectState {
+                name: "board".to_string(),
+                pos: (0.0, 0.0),
+                collider: CollisionShape::Rect { center: (320, 180), size: (640, 480) },
+                cur_spr: Spr::Board,
+                sprs: HashMap::from([(
+                    Spr::Board,
+                    Sprite::new(
+                        vec![Frame::new(
+                            Img::Board, Rect::new(0, 0, 640, 360), (640, 360)
+                        )], 0.0, (0, 0)
+                    )
+                )]), custom: Data::Title
+            }
+        }
+    }
+}
+
+impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Board {
+    fn state(&self) -> GameObjectState<Img, Spr, Data> {
+        self.state.clone()
+    }
+
+    fn on_reset(&mut self) -> bool {
+        false
+    }
+}
+
 pub fn play() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
     Room::new(
         vec![
@@ -426,7 +462,8 @@ pub fn play() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
             Box::new(SnakeBody::new(0, (640.0 / 2.0 + 32.0 / 2.0, 352.0 / 2.0))),
             Box::new(SnakeBody::new(1, (640.0 / 2.0 - 32.0 / 2.0, 352.0 / 2.0))),
             Box::new(SnakeTail::new()),
-            Box::new(Mouse::new())
+            Box::new(Mouse::new()),
+            Box::new(Board::new())
         ], false
     )
 }
