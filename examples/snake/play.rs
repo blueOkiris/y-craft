@@ -8,8 +8,9 @@ use sdl2::{
     rect::Rect, render::{Canvas, TextureCreator}, video::{Window, WindowContext}
 };
 use ycraft::{
+    collision::CollisionShape,
     obj::{
-        CollisionShape, ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
+        ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
     }, res::{Font, Image, Sound}, room::Room
 };
 use crate::game::{

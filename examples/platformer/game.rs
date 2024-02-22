@@ -12,8 +12,9 @@ use sdl2::{
     }
 };
 use ycraft::{
+    collision::CollisionShape,
     obj::{
-        CollisionShape, ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
+        ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
     }, res::{
         Font, Image, Sound
     }, room::Room

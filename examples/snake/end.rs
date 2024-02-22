@@ -7,8 +7,9 @@ use sdl2::{
     rect::Rect
 };
 use ycraft::{
+    collision::CollisionShape,
     obj::{
-        CollisionShape, ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
+        ControlObjectBehavior, Frame, GameObjectBehavior, GameObjectState, Sprite
     }, room::Room
 };
 use crate::game::{
