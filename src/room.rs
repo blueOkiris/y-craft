@@ -58,14 +58,22 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
         let others = self.objs.clone();
         let mut ret = None;
         let mut objs = Vec::new();
-        for obj in self.objs.iter_mut() {
+        let mut to_remove = Vec::new();
+        for (i, obj) in self.objs.iter_mut().enumerate() {
             let check_ret = obj.update(delta, ctl_objs, &others);
             if check_ret.0.is_some() && ret.is_none() && objs.len() < 1 {
-                (ret, objs) = check_ret.clone();
-            }
-            if check_ret.1.len() > 0 && objs.len() < 1 && ret.is_none() {
+                (ret, objs) = check_ret;
+            } else if check_ret.1.len() > 0 && objs.len() < 1 && ret.is_none() {
                 (ret, objs) = check_ret;
             }
+            if obj.should_remove() {
+                to_remove.push(i);
+            }
+        }
+        let mut removed = 0;
+        for i in to_remove.iter() {
+            self.objs.remove(*i - removed);
+            removed += 1;
         }
         let others = self.objs.clone();
         for obj in self.objs.iter_mut() {
