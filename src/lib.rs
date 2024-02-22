@@ -4,6 +4,7 @@ use std::hash::Hash;
 
 pub mod res;
 pub mod obj;
+pub mod collision;
 pub mod room;
 pub mod app;
 pub mod util;
