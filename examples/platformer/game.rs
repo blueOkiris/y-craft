@@ -24,6 +24,14 @@ const JUMP_SPD: f64 = 1500.0;
 const ACC: f64 = 50.0;
 const GRAVITY: f64 = 4096.0;
 const EXTRA_GRAV: f64 = 13000.0;
+const BRICK_POS: [(f64, f64); 6] = [
+    (96.0, 900.0),
+    (160.0, 1000.0),
+    (224.0, 1000.0),
+    (288.0, 1000.0),
+    (352.0, 1000.0),
+    (416.0, 1000.0)
+];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Img {
@@ -56,18 +64,19 @@ pub enum Rm {
 
 #[derive(Clone, Copy)]
 pub enum Data {
-    Brick,
+    Brick(usize),
     Player
 }
 
 #[derive(Clone)]
 struct Brick {
     state: GameObjectState<Img, Spr, Data>,
-    def_pos: (f64, f64)
+    def_pos: (f64, f64),
+    should_die: bool
 }
 
 impl Brick {
-    pub fn new(def_pos: (f64, f64)) -> Self {
+    pub fn new(def_pos: (f64, f64), id: usize) -> Self {
         Self {
             state: GameObjectState {
                 name: "brick".to_string(),
@@ -80,8 +89,9 @@ impl Brick {
                         vec![ Frame::new(Img::Brick, Rect::new(0, 0, 32, 32), (64, 64)) ],
                         0.0, (16, 16)
                     )
-                )]), custom: Data::Brick
-            }, def_pos
+                )]), custom: Data::Brick(id)
+            }, def_pos,
+            should_die: false
         }
     }
 }
@@ -95,8 +105,21 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Brick {
         self.state = new_state.clone();
     }
 
+    fn handle_sdl_event(&mut self, event: &Event) {
+        match event {
+            Event::KeyUp { scancode, .. } if *scancode == Some(Scancode::Escape) => {
+                self.should_die = true;
+            }, _ => {}
+        }
+    }
+
+    fn should_remove(&self) -> bool {
+        self.should_die
+    }
+
     fn on_reset(&mut self) -> bool {
         self.state.pos = self.def_pos;
+        self.should_die = false;
         false
     }
 }
@@ -111,7 +134,8 @@ struct Player {
     grounded: bool,
     extra_grav: bool,
     facing_right: bool,
-    play_jump_sound: bool
+    play_jump_sound: bool,
+    should_reset: bool
 }
 
 impl Player {
@@ -146,7 +170,8 @@ impl Player {
             grounded: false,
             extra_grav: false,
             facing_right: true,
-            play_jump_sound: false
+            play_jump_sound: false,
+            should_reset: false
         }
     }
 }
@@ -169,6 +194,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Player {
         self.extra_grav = false;
         self.facing_right = true;
         self.play_jump_sound = false;
+        self.should_reset = false;
         false
     }
 
@@ -192,6 +218,8 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Player {
                 self.left = false;
             }, Event::KeyUp { scancode, .. } if *scancode == Some(Scancode::Right) => {
                 self.right = false;
+            }, Event::KeyUp { scancode, .. } if *scancode == Some(Scancode::R) => {
+                self.should_reset = true;
             }, _ => {}
         }
     }
@@ -202,6 +230,30 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Player {
             others: &Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>) -> (
                 Option<Rm>, Vec<Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>>
             ) {
+        if self.should_reset {
+            // We can destroy bricks, so when we reset, we want to respawn the bricks that have
+            // been destroyed. It should be all of them, but technically we don't know, so we have
+            // to formulaically figure it out.
+            let mut existing_bricks = Vec::new();
+            for obj in others.iter() {
+                if let Data::Brick(id) = obj.state().custom {
+                    existing_bricks.push(id);
+                }
+            }
+            let to_respawn = (0..=5).into_iter()
+                .map(|id| if !existing_bricks.contains(&id) {
+                    Some(
+                        Box::new(Brick::new(BRICK_POS[id], id))
+                            as Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>
+                    )
+                } else {
+                    None
+                }).filter(|brick| brick.is_some())
+                .map(|brick| brick.unwrap())
+                .collect::<Vec<Box<_>>>();
+            return (Some(Rm::Room0), to_respawn);
+        }
+
         self.state.pos.0 += self.vel.0 * delta;
         self.state.pos.1 += self.vel.1 * delta;
 
@@ -237,7 +289,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Player {
                 if self.state.pos.1 > other.state().pos.1 - size.1 as f64 * 0.8 {
                     continue;
                 }
-                if let Data::Brick = other.state().custom {
+                if let Data::Brick(_) = other.state().custom {
                     let mut other_col = other.state().collider.clone();
                     if let CollisionShape::Rect { center: ref mut other_center, .. } = other_col {
                         other_center.0 += other.state().pos.0 as i32;
@@ -268,7 +320,7 @@ impl GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data> for Player {
     fn on_collision(
             &mut self,
             other: &Box<dyn GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>>) {
-        if let Data::Brick = other.state().custom {
+        if let Data::Brick(_) = other.state().custom {
             if (other.state().pos.0 <= self.state.pos.0 && self.vel.0 < -0.1)
                     || (other.state().pos.0 >= self.state.pos.0 && self.vel.0 > 0.1) {
                 self.state.pos.0 -= if self.vel.0 > 0.1 { 1.0 } else { -1.0 };
@@ -307,12 +359,12 @@ pub fn room0() -> Room<Img, Snd, Fnt, Spr, Rm, Data> {
     Room::new(
         vec![
             Box::new(Player::new((256.0, 900.0))),
-            Box::new(Brick::new((96.0, 900.0))),
-            Box::new(Brick::new((160.0, 1000.0))),
-            Box::new(Brick::new((224.0, 1000.0))),
-            Box::new(Brick::new((288.0, 1000.0))),
-            Box::new(Brick::new((352.0, 1000.0))),
-            Box::new(Brick::new((416.0, 1000.0)))
+            Box::new(Brick::new(BRICK_POS[0], 0)),
+            Box::new(Brick::new(BRICK_POS[1], 1)),
+            Box::new(Brick::new(BRICK_POS[2], 2)),
+            Box::new(Brick::new(BRICK_POS[3], 3)),
+            Box::new(Brick::new(BRICK_POS[4], 4)),
+            Box::new(Brick::new(BRICK_POS[5], 5))
         ], false
     )
 }
