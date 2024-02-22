@@ -14,10 +14,9 @@ use sdl2::{
     }
 };
 use crate::{
+    collision::CollisionShape,
     res::{
-        Font,
-        Sound,
-        Image
+        Font, Image, Sound
     }, IndexRestriction
 };
 
@@ -209,98 +208,6 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Clone
         Data: Clone {
     fn clone(&self) -> Self {
         self.clone_box()
-    }
-}
-
-/// Colliders that attach to GameObjects. Support Circle and Rect colliders
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum CollisionShape {
-    Circle {
-        center: (i32, i32),
-        radius: u32
-    }, Rect {
-        center: (i32, i32),
-        size: (u32, u32)
-    }
-}
-
-impl CollisionShape {
-    pub fn collides_with(&self, other: &CollisionShape) -> bool {
-        match self {
-            CollisionShape::Circle { center, radius } => {
-                match other {
-                    CollisionShape::Circle { center: other_center, radius: other_radius } => {
-                        let a = other_center.0 - center.0;
-                        let b = other_center.1 - center.1;
-                        let c = other_radius + radius;
-                        ((a * a) + (b * b)) as u32 <= (c * c)
-                    }, CollisionShape::Rect { center: other_center, size: other_size } => {
-                        let mut test = center.clone();
-                        let rect = Rect::new(
-                            other_center.0 - other_size.0 as i32 / 2,
-                            other_center.1 - other_size.1 as i32 / 2,
-                            other_size.0,
-                            other_size.1
-                        );
-                        if center.0 < rect.x {
-                            test.0 = rect.x;
-                        } else if center.0 > rect.x + rect.w {
-                            test.0 = rect.x + rect.w;
-                        }
-                        if center.1 < rect.y {
-                            test.1 = rect.y;
-                        } else if center.1 > rect.y + rect.h {
-                            test.1 = rect.y + rect.h;
-                        }
-                        let dist_lat = (center.0 - test.0, center.1 - test.1);
-                        let dist_sqrd = (dist_lat.0 * dist_lat.0) + (dist_lat.1 * dist_lat.1);
-                        dist_sqrd as u32 <= radius * radius
-                    }
-                }
-            }, CollisionShape::Rect { center, size } => {
-                match other {
-                    CollisionShape::Circle { center: other_center, radius: other_radius } => {
-                        let mut test = other_center.clone();
-                        let rect = Rect::new(
-                            center.0 - size.0 as i32 / 2,
-                            center.1 - size.1 as i32 / 2,
-                            size.0,
-                            size.1
-                        );
-                        if other_center.0 < rect.x {
-                            test.0 = rect.x;
-                        } else if other_center.0 > rect.x + rect.w {
-                            test.0 = rect.x + rect.w;
-                        }
-                        if other_center.1 < rect.y {
-                            test.1 = rect.y;
-                        } else if other_center.1 > rect.y + rect.h {
-                            test.1 = rect.y + rect.h;
-                        }
-                        let dist_lat = (other_center.0 - test.0, other_center.1 - test.1);
-                        let dist_sqrd = (dist_lat.0 * dist_lat.0) + (dist_lat.1 * dist_lat.1);
-                        dist_sqrd as u32 <= other_radius * other_radius
-                    }, CollisionShape::Rect { center: other_center, size: other_size } => {
-                        let r1 = Rect::new(
-                            center.0 - size.0 as i32 / 2,
-                            center.1 - size.1 as i32 / 2,
-                            size.0,
-                            size.1
-                        );
-                        let r2 = Rect::new(
-                            other_center.0 - other_size.1 as i32 / 2,
-                            other_center.1 - other_size.1 as i32 / 2,
-                            other_size.0,
-                            other_size.1
-                        );
-                        r1.x + r1.w >= r2.x
-                            && r1.x <= r2.x + r2.w
-                            && r1.y + r1.h >= r2.y
-                            && r1.y <= r2.y + r2.h
-                    }
-                }
-            }
-        }
     }
 }
 
