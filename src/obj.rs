@@ -99,6 +99,10 @@ pub trait GameObjectBehavior<Img, Snd, Fnt, Spr, Rm, Data>:
         self.set_state(&state);
         Ok(())
     }
+
+    fn should_remove(&self) -> bool {
+        false
+    }
 }
 
 /// A special trait to implement cloning for our dynamic GameObjects
