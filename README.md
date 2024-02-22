@@ -51,5 +51,5 @@ If you want to distribute your application, you will need to make sure the targe
 ## Examples
 
 - snake - a snake clone. Fill the entire screen to win. Don't hit the walls or your body
-- platformer - example of how to implement platformer physics
+- platformer - example of how to implement platformer physics as well as a test of several different engine features
 
