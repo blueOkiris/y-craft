@@ -11,8 +11,9 @@ use sdl2::{
 };
 use crate::{
     obj::{
-        CollisionShape, ControlObjectBehavior, GameObjectBehavior
-    }, res::{
+        ControlObjectBehavior, GameObjectBehavior
+    }, collision::CollisionShape,
+    res::{
         Font, Image, Sound
     }, IndexRestriction
 };
@@ -87,6 +88,9 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
                 }, CollisionShape::Circle { ref mut center, .. } => {
                     center.0 += obj.state().pos.0 as i32;
                     center.1 += obj.state().pos.1 as i32;
+                }, CollisionShape::Polygon { ref mut center, .. } => {
+                    center.0 += obj.state().pos.0 as i32;
+                    center.1 += obj.state().pos.1 as i32;
                 }
             }
 
@@ -103,6 +107,9 @@ impl<Img, Snd, Fnt, Spr, Rm, Data> Room<Img, Snd, Fnt, Spr, Rm, Data> where
                         center.0 += other.state().pos.0 as i32;
                         center.1 += other.state().pos.1 as i32;
                     }, CollisionShape::Circle { ref mut center, .. } => {
+                        center.0 += other.state().pos.0 as i32;
+                        center.1 += other.state().pos.1 as i32;
+                    }, CollisionShape::Polygon { ref mut center, .. } => {
                         center.0 += other.state().pos.0 as i32;
                         center.1 += other.state().pos.1 as i32;
                     }
